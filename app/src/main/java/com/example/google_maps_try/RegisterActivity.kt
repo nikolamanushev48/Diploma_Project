@@ -8,7 +8,7 @@ import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import com.google.firebase.auth.FirebaseAuth
-import kotlinx.android.synthetic.main.activity_loginorig.*
+//import kotlinx.android.synthetic.main.activity_loginorig.*
 
 class RegisterActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -29,7 +29,7 @@ class RegisterActivity : AppCompatActivity() {
             startActivity(intent);
         }
 
-        button2.setOnClickListener() {
+        btnSignUp.setOnClickListener() {
 
                 val email = emailId.text.toString()
                 val pwd: String = password.text.toString()

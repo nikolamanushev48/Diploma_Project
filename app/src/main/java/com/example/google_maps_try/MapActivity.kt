@@ -1,20 +1,28 @@
 package com.example.google_maps_try
-//Bazi danni
-//kak da smenqm aktivitita bez da rastartvam aktivitito(kak da se zapazqt markerite?)
 
+import android.content.ContentValues.TAG
 import android.content.Intent
 import android.content.SharedPreferences
+import android.graphics.Color
 import android.os.Bundle
+import android.util.Log
+import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.model.CircleOptions
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
-import com.google.firebase.database.ktx.database
-import com.google.firebase.ktx.Firebase
+import com.google.android.gms.tasks.OnFailureListener
+import com.google.android.gms.tasks.OnSuccessListener
+import com.google.firebase.firestore.DocumentReference
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.GeoPoint
+import java.sql.DriverManager.println
+import java.util.*
 
 
 class MapActivity : AppCompatActivity(), OnMapReadyCallback {
@@ -32,44 +40,51 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
            .findFragmentById(R.id.map_secondary_page) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
-        prefs = this.getSharedPreferences("LatLng", MODE_PRIVATE);
-    }
 
-    //val list_latitude: MutableList<Double> = ArrayList()
-    //val list_longitude: MutableList<Double> = ArrayList()
+
+        val button: Button = findViewById(R.id.maps_close_button)
+        button.setOnClickListener(){
+            val intent = Intent(this, MainActivity::class.java)
+            finish();
+            overridePendingTransition(0, 0);
+            startActivity(intent);
+            println("In map activity!!!")
+        }
+
+    }
 
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
 
-        val temp_prefs: SharedPreferences? = prefs
-/*!!!!!!!!!!!!!!!!!!!!NE TRIJ!@
-        if (temp_prefs != null) {
-            if((temp_prefs.contains("Lat")) && (temp_prefs.contains("Lng"))) {
-                val lat = temp_prefs.getString("Lat", "")
-                val lng = temp_prefs.getString("Lng", "")
-                val l = LatLng(lat!!.toDouble(), lng!!.toDouble())
-                mMap.addMarker(MarkerOptions().position(l))
-                //val database = Firebase.database("https://maps-66477-default-rtdb.firebaseio.com/")
-                //val reference = database.reference
-                //val data = reference.push().child("location").setValue(l)
-            }
-        }*/
         val list: MutableList<LatLng> = ArrayList()
-        //var list: MutableMap<Int,Int> = mutableMapOf()
+
+
+        val position = LatLng(41.4314, 25.0519)
+        mMap.addCircle(
+                CircleOptions()
+                        .center(position)
+                        .radius(3500.0)
+                        .strokeWidth(3f)
+                        .fillColor(Color.argb(70,240, 37, 14))
+        )
 
         mMap.setOnMapClickListener() { point ->
-            /*!!!!!NE TRIJ!!!!!!!!!!!!!!!!!!!!!!!!!!
-            prefs!!.edit().putString("Lat", java.lang.String.valueOf(point.latitude)).apply()
-            prefs!!.edit().putString("Lng", java.lang.String.valueOf(point.longitude)).apply()
-            */
-
             var br = 1;
             var br2 = 2;
 
-            val database = Firebase.database("https://maps-66477-default-rtdb.firebaseio.com/")
-            val reference = database.reference
-            val data = reference.push().child("location").setValue(point)
+            val database = FirebaseFirestore.getInstance()
 
+            val user_location: MutableMap<String, GeoPoint> = HashMap()
+
+            user_location.put("coordinates",GeoPoint(point.latitude,point.longitude))
+
+
+            database.collection("locations")
+                    .add(user_location)
+                    .addOnSuccessListener(OnSuccessListener<DocumentReference> {
+                        documentReference -> Log.d(TAG, "DocumentSnapshot added with ID: " + documentReference.id)
+                    })
+                    .addOnFailureListener(OnFailureListener { e -> Log.w(TAG, "Error adding document", e) })
 
             val marker = MarkerOptions()
                 .position(LatLng(point.latitude, point.longitude))
@@ -83,8 +98,6 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
            //prefs!!.edit().putString("Lng", java.lang.String.valueOf(point.longitude)).commit()
 
             br++
-            //list_latitude.add(point.latitude)
-            //list_longitude.add(point.longitude)
             if(br == br2){
                 br2++
 
@@ -94,18 +107,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
             }
         }
 
-
-
-
-        val starcevo = LatLng(41.4314324, 25.0519345)
-
-        mMap.addMarker(MarkerOptions().position(starcevo).title("Marker in Sydney"))
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(starcevo))
-
     }
-
-//--------------->>>>>.--------->>>>>>>>>>>>.----------------------->>>>>>>>>>---------------------->>>>>>>>>>>--------------------------------->>>>>>>
-
 }
 
 

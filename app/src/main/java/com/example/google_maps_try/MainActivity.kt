@@ -1,21 +1,32 @@
 package com.example.google_maps_try
 
+
+import android.app.Activity
+import android.content.ContentValues.TAG
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.graphics.Color
+import android.location.Location
 import android.os.Bundle
+import android.provider.MediaStore
+import android.util.Log
 import android.widget.Button
+import android.widget.TextView
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import com.google.android.gms.maps.CameraUpdateFactory
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.model.CircleOptions
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.ValueEventListener
-import com.google.firebase.database.ktx.database
-import com.google.firebase.ktx.Firebase
+import com.google.firebase.firestore.*
+import java.sql.DriverManager.println
+import java.util.*
 
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback {
@@ -25,97 +36,184 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private val map : MapActivity = MapActivity();
     val fm = supportFragmentManager
 
+    lateinit var pinCount : TextView
 
+    lateinit var fusedLocationProviderClient: FusedLocationProviderClient
+
+    lateinit var positionSave : Location
+
+    val result_distance = FloatArray(100)
+
+    var br_markers : Int = 0
+
+    val result_loc: ArrayList<GeoPoint> = ArrayList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
+
+        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
+        positionSave = Location("")
+        checkLocationPermissions()
+
+
         val mapFragment = supportFragmentManager
                 .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
-       val button: Button = findViewById(R.id.location_button)
-        map.prefs = this.getSharedPreferences("LatLng", MODE_PRIVATE)
 
-       button.setOnClickListener(){
-           val intent = Intent(this, MapActivity::class.java)
+        val addButton: Button = findViewById(R.id.location_button)
+
+        addButton.setOnClickListener(){
+
+           val intent= Intent(this, MapActivity::class.java)
            finish();
            overridePendingTransition(0, 0);
            startActivity(intent);
            println("In map activity!!!")
-       }
+        }
+
     }
 
-    override fun onMapReady(googleMap: GoogleMap) {
-        mMap = googleMap
+override fun onMapReady(googleMap: GoogleMap) {
+    mMap = googleMap
+    val database = FirebaseFirestore.getInstance()
+    pinCount = findViewById(R.id.numberPins)
 
-        //val locations = FirebaseDatabase.getInstance().getReference().child("location");
-        val database = Firebase.database("https://maps-66477-default-rtdb.firebaseio.com/")
-        //var reference = database.reference
-        val locations : DatabaseReference = database.reference
-        //reference = FirebaseDatabase.getInstance().getReference("location")//.child("location")
-        println("!!!DATA : $locations")
+    val position = LatLng(41.4314, 25.0519)
 
-        locations.addListenerForSingleValueEvent(object : ValueEventListener {
 
-            override fun onCancelled(error: DatabaseError) {
-                println("Listener : " + error.message)
-            }
+database.collection("locations")
+    .get()
+    .addOnCompleteListener{ task ->
 
-            override fun onDataChange(snapshot: DataSnapshot) {
-                //val children = snapshot.getValue().toString()
-                val children = snapshot.children
-                println("DATA CHANGE!!! : $children")
-                var command : String = ""
-                children.forEach {
-                    println("Listener 2 : " + it.toString())
-                    command = it.getValue().toString()
-                    println("LATITUDE : " + command)
+        if (task.isSuccessful) {
+            var i = 0;
+            for (document in task.result) {
+                result_loc.add(document.data.getValue("coordinates") as GeoPoint)
+
+                val geoPoint = document.getGeoPoint("coordinates")
+
+                Location.distanceBetween(positionSave.latitude, positionSave.longitude, result_loc[i].latitude, result_loc[i].longitude, result_distance)
+
+                if (geoPoint != null) {
+                    val marker = MarkerOptions()
+                        .position(LatLng(result_loc[i].latitude, result_loc[i].longitude))
+                    mMap.addMarker(marker)
+
                 }
 
-                var text = command.replace("\\D".toRegex(), "")
+                br_markers = task.result.size()
+                pinCount.setText(br_markers.toString());
 
-
-
-                //text = text.trim { it <= ' ' }
-
-
-                //text = text.replace(" +".toRegex(), " ")
-
-
-                println("FINAL TEXT : " + text)
-
+                i++;
             }
-        })
 
-        mMap.setOnMapClickListener() { point ->
-            println("IM HEREEEEE")
-            mMap.addMarker(MarkerOptions().position(point))
-            val database = Firebase.database("https://maps-66477-default-rtdb.firebaseio.com/")
-            val reference = database.reference
-            val data = reference.push().child("location").setValue(point)
+        } else {
+            Log.w(TAG, "Error getting documents.", task.exception)
+        }
 
         }
-        /*!!!!!!!!!!!!!!!!!!!!NE TRIJ!@
-        var temp_prefs: SharedPreferences? = map.prefs
-        if (temp_prefs != null) {
-            if((temp_prefs.contains("Lat")) && (temp_prefs.contains("Lng"))){
-                val lat = temp_prefs.getString("Lat", "")
-                val lng = temp_prefs.getString("Lng", "")
-                val l = LatLng(lat!!.toDouble(), lng!!.toDouble())
-                mMap.addMarker(MarkerOptions().position(l))
-                val database = Firebase.database("https://maps-66477-default-rtdb.firebaseio.com/")
-                val reference = database.reference
-                val data = reference.push().child("location").setValue(l)
-            }
-        }*/
 
-        val starcevo = LatLng(41.4314, 25.0519)
 
-        mMap.addMarker(MarkerOptions().position(starcevo).title("Marker in Sydney"))
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(starcevo))
+    mMap.setOnMarkerClickListener {
+        val intent= Intent(this, MarkerActivity::class.java)
+        finish();
+        overridePendingTransition(0, 0);
+        startActivity(intent);
+        println("In marker activity!!!")
+        true
     }
+
+
+
+
+    val delButton: Button = findViewById(R.id.delete_button)
+    delButton.setOnClickListener() {
+
+
+
+        mMap.setOnMarkerClickListener {
+            it.remove()
+            println("MARKER CLICKED !!!!!!!!!!!!!!!!!!!!!!")
+
+           //val docRef : DocumentReference = database.collection("locations").document()
+
+            database.collection("locations").whereEqualTo("coordinates",GeoPoint(it.position.latitude,it.position.longitude))
+                    .get().addOnCompleteListener(){
+                val docSnapshot : DocumentSnapshot = it.result.documents.get(0)
+                val docID : String = docSnapshot.id
+                database.collection("locations").document(docID).delete().addOnCompleteListener(){ task->
+                    if(task.isSuccessful){
+                        println("LOCATION DELETED" + task.result)
+                        br_markers--
+                        pinCount.setText(br_markers.toString())
+                    }else{
+                        println("NOT SUCCEEDED")
+                    }
+                }
+
+            }
+
+
+            mMap.setOnMarkerClickListener(null);
+            true
+        }
+    }
+
+    }
+
+
+    private fun checkLocationPermissions(){
+        val task = fusedLocationProviderClient.lastLocation
+
+        println("IN FUNC")
+
+        if(ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+            ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED){
+            println("IN ERRR")
+                ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION), 101)
+
+                return
+        }
+
+
+        task.addOnSuccessListener { location: Location? ->
+            if (location != null) {
+                println("LOCATIONN :" + location.latitude)
+                positionSave.latitude = location.latitude
+                positionSave.longitude = location.longitude
+                positionSave = location
+                mMap.addMarker(MarkerOptions().position(LatLng(location.latitude, location.longitude)).title("MyPosition"))
+
+                val radius:Double = 3500.0
+
+                for (i in 0..br_markers) {
+                    //if(result_distance[i] < radius){
+                        println("IN BORDERS WITH THE RADIUS " + result_distance[0])
+                    //}
+                }
+
+                mMap.addCircle(
+                        CircleOptions()
+                                .center(LatLng(location.latitude, location.longitude))
+                                .radius(radius)
+                                .strokeWidth(3f)
+                                .fillColor(Color.argb(70, 240, 37, 14))
+                )
+
+                //Location.distanceBetween(location.latitude,location.longitude,)
+
+            }
+
+        }
+    }
+
+    fun test(){
+    println("TeST FUNC!")
+    }
+
+
 }
 
 

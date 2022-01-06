@@ -1,17 +1,27 @@
 <resources>
+
+    <style name="Button.White" parent="ThemeOverlay.AppCompat">
+        <item name="colorAccent">@android:color/white</item>
+    </style>
+
+
     <string name="app_name">Google_Maps_Try</string>
     <string name="title_activity_maps">Map</string>
-    <string name="add_location" />
+    <string name="close_maps">Close</string>
+    <string name="add_location">Add Location</string>
     <string name="title_activity_login">Login</string>
     <string name="Registration">Registration</string>
+    <string name="delete_location">Delete Location</string>
+    <string name="MarkerActivity">Marker Activity</string>
     <!-- Strings used for fragments for navigation -->
     <string name="first_fragment_label">First Fragment</string>
     <string name="second_fragment_label">Second Fragment</string>
     <string name="next">Next</string>
     <string name="previous">Previous</string>
-
+    <string name="text_Pins" />
     <string name="hello_first_fragment">Hello first fragment</string>
     <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
     <string name="MainPage" />
     <string name="Login" />
+    <string name="title_activity_marker">MarkerActivity</string>
 </resources>
