@@ -21,12 +21,13 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.CircleOptions
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.gms.maps.model.*
+import com.google.android.gms.tasks.OnFailureListener
+import com.google.android.gms.tasks.OnSuccessListener
 import com.google.firebase.firestore.*
 import java.sql.DriverManager.println
 import java.util.*
+import kotlin.collections.ArrayList
 
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback {
@@ -46,15 +47,21 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     var br_markers : Int = 0
 
-    val result_loc: ArrayList<GeoPoint> = ArrayList()
+    val result_loc: MutableMap<GeoPoint,String> = HashMap()
+
+    var markerDestination : String = ""
+
+    lateinit var documentId : String
+
+    lateinit var tempDocId : String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
         positionSave = Location("")
-        checkLocationPermissions()
 
 
         val mapFragment = supportFragmentManager
@@ -66,21 +73,28 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
         addButton.setOnClickListener(){
 
-           val intent= Intent(this, MapActivity::class.java)
+           val intent= Intent(this, MapActivity::class.java).putExtra("docCleaned",0)
            finish();
            overridePendingTransition(0, 0);
            startActivity(intent);
            println("In map activity!!!")
         }
 
+
     }
 
 override fun onMapReady(googleMap: GoogleMap) {
     mMap = googleMap
+    checkLocationPermissions()
     val database = FirebaseFirestore.getInstance()
     pinCount = findViewById(R.id.numberPins)
 
     val position = LatLng(41.4314, 25.0519)
+
+    val intent : Intent = intent
+
+
+
 
 
 database.collection("locations")
@@ -88,20 +102,48 @@ database.collection("locations")
     .addOnCompleteListener{ task ->
 
         if (task.isSuccessful) {
-            var i = 0;
+            var i = 0
             for (document in task.result) {
-                result_loc.add(document.data.getValue("coordinates") as GeoPoint)
-
                 val geoPoint = document.getGeoPoint("coordinates")
+                val isClean = document.getBoolean("isClean")
+                Log.i("geo",geoPoint!!.latitude.toString())
 
-                Location.distanceBetween(positionSave.latitude, positionSave.longitude, result_loc[i].latitude, result_loc[i].longitude, result_distance)
 
-                if (geoPoint != null) {
-                    val marker = MarkerOptions()
-                        .position(LatLng(result_loc[i].latitude, result_loc[i].longitude))
-                    mMap.addMarker(marker)
+                //database.collection("locations").document(document.id).update("isClean",false)
 
+                if(isClean == true){
+                    mMap.addMarker(MarkerOptions().position(LatLng(geoPoint.latitude, geoPoint.longitude)).icon(BitmapDescriptorFactory.defaultMarker(
+                        BitmapDescriptorFactory.HUE_GREEN)));
+                }else{
+                    database.collection("locations").document(document.id).update("isClean",false)
+                    if(intent.getStringExtra("doneMarkerDocId") != null) {
+                        documentId = intent.getStringExtra("doneMarkerDocId")!!
+                        if (documentId == document.id) {
+                            database.collection("locations").document(document.id).update("isClean",true)
+                            mMap.addMarker(MarkerOptions().position(LatLng(geoPoint.latitude, geoPoint.longitude)).icon(BitmapDescriptorFactory.defaultMarker(
+                                BitmapDescriptorFactory.HUE_GREEN)));
+                        } else {
+                            database.collection("locations").document(document.id).update("isClean",false)
+                            val marker = MarkerOptions()
+                                .position(LatLng(geoPoint.latitude, geoPoint.longitude))
+                            mMap.addMarker(marker)
+                        }
+                    }else{
+                        val marker = MarkerOptions()
+                            .position(LatLng(geoPoint.latitude, geoPoint.longitude))
+                        mMap.addMarker(marker)
+                    }
                 }
+
+
+
+
+
+
+                result_loc.put(geoPoint,document.id)
+
+
+                Location.distanceBetween(positionSave.latitude, positionSave.longitude, geoPoint.latitude, geoPoint.longitude, result_distance)
 
                 br_markers = task.result.size()
                 pinCount.setText(br_markers.toString());
@@ -113,14 +155,17 @@ database.collection("locations")
             Log.w(TAG, "Error getting documents.", task.exception)
         }
 
-        }
+    }
+
 
 
     mMap.setOnMarkerClickListener {
-        val intent= Intent(this, MarkerActivity::class.java)
-        finish();
+        val positionMarker = GeoPoint(it.position.latitude,it.position.longitude)
+
+
+        val intentMarkerActivity= Intent(this, MarkerActivity::class.java).putExtra("tempMarkerIntent",result_loc.get(positionMarker))
         overridePendingTransition(0, 0);
-        startActivity(intent);
+        startActivity(intentMarkerActivity);
         println("In marker activity!!!")
         true
     }
@@ -131,37 +176,41 @@ database.collection("locations")
     val delButton: Button = findViewById(R.id.delete_button)
     delButton.setOnClickListener() {
 
-
-
         mMap.setOnMarkerClickListener {
             it.remove()
             println("MARKER CLICKED !!!!!!!!!!!!!!!!!!!!!!")
 
-           //val docRef : DocumentReference = database.collection("locations").document()
 
-            database.collection("locations").whereEqualTo("coordinates",GeoPoint(it.position.latitude,it.position.longitude))
-                    .get().addOnCompleteListener(){
-                val docSnapshot : DocumentSnapshot = it.result.documents.get(0)
-                val docID : String = docSnapshot.id
-                database.collection("locations").document(docID).delete().addOnCompleteListener(){ task->
-                    if(task.isSuccessful){
-                        println("LOCATION DELETED" + task.result)
-                        br_markers--
-                        pinCount.setText(br_markers.toString())
-                    }else{
-                        println("NOT SUCCEEDED")
-                    }
-                }
+            //val docRef : DocumentReference = database.collection("locations").document()
+            Log.i("tag", "SADASASDASDASDASDASDAS" + result_loc.get(GeoPoint(it.position.latitude, it.position.longitude)))
 
+
+                    Log.i("loc", "CORRECT LOCATION ID REGULAR!!!!")
+                    database.collection("locations").whereEqualTo("coordinates", GeoPoint(it.position.latitude, it.position.longitude))
+                        .get().addOnCompleteListener() {
+
+                            val docSnapshot: DocumentSnapshot = it.result.documents.get(0)
+                            val docID: String = docSnapshot.id
+                            database.collection("locations").document(docID).delete()
+                                .addOnCompleteListener() { task ->
+                                    if (task.isSuccessful) {
+                                        println("LOCATION DELETED" + task.result)
+                                        br_markers--
+                                        pinCount.setText(br_markers.toString())
+                                    } else {
+                                        println("NOT SUCCEEDED")
+                                    }
+                                }
+
+                        }
+
+                    mMap.setOnMarkerClickListener(null);
+                    true
             }
-
-
-            mMap.setOnMarkerClickListener(null);
-            true
         }
     }
 
-    }
+
 
 
     private fun checkLocationPermissions(){

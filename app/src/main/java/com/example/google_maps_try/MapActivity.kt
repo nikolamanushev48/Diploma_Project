@@ -78,13 +78,17 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
 
             user_location.put("coordinates",GeoPoint(point.latitude,point.longitude))
 
-
             database.collection("locations")
                     .add(user_location)
                     .addOnSuccessListener(OnSuccessListener<DocumentReference> {
                         documentReference -> Log.d(TAG, "DocumentSnapshot added with ID: " + documentReference.id)
                     })
                     .addOnFailureListener(OnFailureListener { e -> Log.w(TAG, "Error adding document", e) })
+
+            database.collection("locations").document().update("isClean",false)
+
+
+
 
             val marker = MarkerOptions()
                 .position(LatLng(point.latitude, point.longitude))
