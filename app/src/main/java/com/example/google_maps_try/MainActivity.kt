@@ -34,9 +34,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private lateinit var mMap: GoogleMap
 
-    private val map : MapActivity = MapActivity();
-    val fm = supportFragmentManager
-
     lateinit var pinCount : TextView
 
     lateinit var fusedLocationProviderClient: FusedLocationProviderClient
@@ -49,11 +46,21 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     val result_loc: MutableMap<GeoPoint,String> = HashMap()
 
-    var markerDestination : String = ""
-
     lateinit var documentId : String
 
     lateinit var tempDocId : String
+
+    val database = FirebaseFirestore.getInstance()
+
+    private val getResult =
+        registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) {
+            if (it.resultCode == Activity.RESULT_OK) {
+                mapGeneration()
+            }
+        }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -83,89 +90,72 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     }
 
+
+    fun mapGeneration(){
+
+        mMap.clear()
+
+        database.collection("locations")
+            .get()
+            .addOnCompleteListener{ task ->
+
+                if (task.isSuccessful) {
+
+                    for (document in task.result) {
+                        val geoPoint = document.getGeoPoint("coordinates")
+                        val isClean = document.getBoolean("isClean")
+                        Log.i("geo",geoPoint!!.latitude.toString())
+
+
+                        if(isClean == true){
+                            mMap.addMarker(MarkerOptions().position(LatLng(geoPoint.latitude, geoPoint.longitude)).icon(BitmapDescriptorFactory.defaultMarker(
+                                BitmapDescriptorFactory.HUE_GREEN)));
+                        }else{
+
+                                val marker = MarkerOptions()
+                                    .position(LatLng(geoPoint.latitude, geoPoint.longitude))
+                                mMap.addMarker(marker)
+                            }
+
+                        result_loc.put(geoPoint,document.id)
+
+
+                        Location.distanceBetween(positionSave.latitude, positionSave.longitude, geoPoint.latitude, geoPoint.longitude, result_distance)
+
+                        br_markers = task.result.size()
+                        pinCount.setText(br_markers.toString());
+
+
+                    }
+
+                } else {
+                    Log.w(TAG, "Error getting documents.", task.exception)
+                }
+
+            }
+    }
+
+
+
 override fun onMapReady(googleMap: GoogleMap) {
     mMap = googleMap
     checkLocationPermissions()
-    val database = FirebaseFirestore.getInstance()
+
     pinCount = findViewById(R.id.numberPins)
 
     val position = LatLng(41.4314, 25.0519)
 
     val intent : Intent = intent
 
-
-
-
-
-database.collection("locations")
-    .get()
-    .addOnCompleteListener{ task ->
-
-        if (task.isSuccessful) {
-            var i = 0
-            for (document in task.result) {
-                val geoPoint = document.getGeoPoint("coordinates")
-                val isClean = document.getBoolean("isClean")
-                Log.i("geo",geoPoint!!.latitude.toString())
-
-
-                //database.collection("locations").document(document.id).update("isClean",false)
-
-                if(isClean == true){
-                    mMap.addMarker(MarkerOptions().position(LatLng(geoPoint.latitude, geoPoint.longitude)).icon(BitmapDescriptorFactory.defaultMarker(
-                        BitmapDescriptorFactory.HUE_GREEN)));
-                }else{
-                    database.collection("locations").document(document.id).update("isClean",false)
-                    if(intent.getStringExtra("doneMarkerDocId") != null) {
-                        documentId = intent.getStringExtra("doneMarkerDocId")!!
-                        if (documentId == document.id) {
-                            database.collection("locations").document(document.id).update("isClean",true)
-                            mMap.addMarker(MarkerOptions().position(LatLng(geoPoint.latitude, geoPoint.longitude)).icon(BitmapDescriptorFactory.defaultMarker(
-                                BitmapDescriptorFactory.HUE_GREEN)));
-                        } else {
-                            database.collection("locations").document(document.id).update("isClean",false)
-                            val marker = MarkerOptions()
-                                .position(LatLng(geoPoint.latitude, geoPoint.longitude))
-                            mMap.addMarker(marker)
-                        }
-                    }else{
-                        val marker = MarkerOptions()
-                            .position(LatLng(geoPoint.latitude, geoPoint.longitude))
-                        mMap.addMarker(marker)
-                    }
-                }
-
-
-
-
-
-
-                result_loc.put(geoPoint,document.id)
-
-
-                Location.distanceBetween(positionSave.latitude, positionSave.longitude, geoPoint.latitude, geoPoint.longitude, result_distance)
-
-                br_markers = task.result.size()
-                pinCount.setText(br_markers.toString());
-
-                i++;
-            }
-
-        } else {
-            Log.w(TAG, "Error getting documents.", task.exception)
-        }
-
-    }
-
-
+    mapGeneration()
 
     mMap.setOnMarkerClickListener {
         val positionMarker = GeoPoint(it.position.latitude,it.position.longitude)
 
-
         val intentMarkerActivity= Intent(this, MarkerActivity::class.java).putExtra("tempMarkerIntent",result_loc.get(positionMarker))
         overridePendingTransition(0, 0);
-        startActivity(intentMarkerActivity);
+        getResult.launch(intentMarkerActivity)
+        //startActivity(intentMarkerActivity);
         println("In marker activity!!!")
         true
     }
@@ -179,10 +169,6 @@ database.collection("locations")
         mMap.setOnMarkerClickListener {
             it.remove()
             println("MARKER CLICKED !!!!!!!!!!!!!!!!!!!!!!")
-
-
-            //val docRef : DocumentReference = database.collection("locations").document()
-            Log.i("tag", "SADASASDASDASDASDASDAS" + result_loc.get(GeoPoint(it.position.latitude, it.position.longitude)))
 
 
                     Log.i("loc", "CORRECT LOCATION ID REGULAR!!!!")
@@ -213,6 +199,10 @@ database.collection("locations")
 
 
 
+
+//GeoQueries - da gi rabotim sled 14 mart(predavane na dokumentaciq)
+//Do togava ne pipam!!!!!!
+
     private fun checkLocationPermissions(){
         val task = fusedLocationProviderClient.lastLocation
 
@@ -222,7 +212,6 @@ database.collection("locations")
             ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED){
             println("IN ERRR")
                 ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION), 101)
-
                 return
         }
 
@@ -238,9 +227,7 @@ database.collection("locations")
                 val radius:Double = 3500.0
 
                 for (i in 0..br_markers) {
-                    //if(result_distance[i] < radius){
                         println("IN BORDERS WITH THE RADIUS " + result_distance[0])
-                    //}
                 }
 
                 mMap.addCircle(
@@ -251,16 +238,11 @@ database.collection("locations")
                                 .fillColor(Color.argb(70, 240, 37, 14))
                 )
 
-                //Location.distanceBetween(location.latitude,location.longitude,)
-
             }
 
         }
     }
 
-    fun test(){
-    println("TeST FUNC!")
-    }
 
 
 }

@@ -54,16 +54,17 @@ class MarkerActivity : AppCompatActivity() {
     //val database = FirebaseFirestore.getInstance()
     lateinit var documentId : String
 
+   var tempButtonResult : Int = 0
 
     var resultLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
-                // There are no request codes
+
                 val data: Intent? = result.data
 
                 Log.i("marker",documentId)
                 val imageBitmap = data?.extras?.get("data") as Bitmap
-                //imageView.setImageBitmap(imageBitmap)
+
 
                 val tempAddress = UUID.randomUUID().toString()
 
@@ -89,14 +90,19 @@ class MarkerActivity : AppCompatActivity() {
                         val database = FirebaseFirestore.getInstance()
                         val docRef = database.collection("locations").document(documentId)
 
+                        if(tempButtonResult == 2) {
+                            //docRef.update("photoAddress", tempAddress)
+                            docRef.update("photoAddress", tempAddress,"isClean",true).addOnCompleteListener{
+                                val trashDoneIntent = Intent(this, MainActivity::class.java).putExtra("doneMarkerDocId", documentId)
+                                setResult(Activity.RESULT_OK,trashDoneIntent)
+                                finish()
 
-                        docRef.update("photoAddress", tempAddress)
-                                /*
-                            .addOnSuccessListener {
-                                Log.d(ContentValues.TAG, "DocumentSnapshot added with ID: " + docRef.id)
-                            }.addOnFailureListener { re ->
-                                Log.w(ContentValues.TAG, "Error update reference", re)
-                            }*/
+                            }
+                            //database.collection("locations").document(documentId).update("isClean",true)
+
+                        }else{
+                            docRef.update("photoAddress", tempAddress)
+                        }
 
 
                     }.addOnFailureListener { be ->
@@ -107,14 +113,10 @@ class MarkerActivity : AppCompatActivity() {
                 }
             }
 
-
-
         }
 
-    // Register the permissions callback, which handles the user's response to the
-    // system permissions dialog. Save the return value, an instance of
-    // ActivityResultLauncher. You can use either a val, as shown in this snippet,
-    // or a lateinit var in your onAttach() or onCreate() method.
+
+
     val requestPermissionLauncher =
         registerForActivityResult(
             ActivityResultContracts.RequestPermission()
@@ -124,15 +126,12 @@ class MarkerActivity : AppCompatActivity() {
                 val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
                 resultLauncher.launch(takePictureIntent)
             } else {
-                // Explain to the user that the feature is unavailable because the
-                // features requires a permission that the user has denied. At the
-                // same time, respect the user's decision. Don't link to system
-                // settings in an effort to convince the user to change their
-                // decision.
+
+
             }
         }
 
-    //    @RequiresApi(Build.VERSION_CODES.M)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_marker)
@@ -188,10 +187,10 @@ class MarkerActivity : AppCompatActivity() {
 
 
 
-
         val buttonTrashDone: Button = findViewById(R.id.trashDone)
 
         buttonTrashDone.setOnClickListener {
+            tempButtonResult = 2
 
                 when {
                     ContextCompat.checkSelfPermission(
@@ -203,6 +202,8 @@ class MarkerActivity : AppCompatActivity() {
 
                             val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
                             resultLauncher.launch(takePictureIntent)
+
+
                             //finish()
 
 /*
@@ -231,10 +232,6 @@ class MarkerActivity : AppCompatActivity() {
 
                     }
                 }
-
-
-
-
 
         }
 

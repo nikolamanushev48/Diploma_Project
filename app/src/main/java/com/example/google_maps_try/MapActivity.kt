@@ -99,8 +99,6 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
 
             println(point.latitude.toString() + "---" + point.longitude)
 
-           //prefs!!.edit().putString("Lng", java.lang.String.valueOf(point.longitude)).commit()
-
             br++
             if(br == br2){
                 br2++
