@@ -65,7 +65,7 @@ class MarkerActivity : AppCompatActivity() {
                 Log.i("marker",documentId)
                 val imageBitmap = data?.extras?.get("data") as Bitmap
 
-
+/*
                 val tempAddress = UUID.randomUUID().toString()
 
                 val photoRef = storageRef.child("photos")
@@ -110,7 +110,17 @@ class MarkerActivity : AppCompatActivity() {
                     }
 
 
+                }*/
+
+                (application as MyApplication).apiService.imageSave(imageBitmap,documentId,tempButtonResult == 2)
+
+                if(tempButtonResult == 2){
+                    val trashDoneIntent = Intent(this, MainActivity::class.java).putExtra("doneMarkerDocId", documentId)
+                    setResult(Activity.RESULT_OK,trashDoneIntent)
+                    finish()
                 }
+
+
             }
 
         }
