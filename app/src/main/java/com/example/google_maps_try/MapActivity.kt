@@ -1,14 +1,11 @@
 package com.example.google_maps_try
 
-import android.content.ContentValues.TAG
 import android.content.Intent
 import android.content.SharedPreferences
 import android.graphics.Color
 import android.os.Bundle
-import android.util.Log
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
-import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
@@ -16,11 +13,6 @@ import com.google.android.gms.maps.model.CircleOptions
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
-import com.google.android.gms.tasks.OnFailureListener
-import com.google.android.gms.tasks.OnSuccessListener
-import com.google.firebase.firestore.DocumentReference
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.GeoPoint
 import java.sql.DriverManager.println
 import java.util.*
 
@@ -69,9 +61,11 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         )
 
         mMap.setOnMapClickListener() { point ->
+
             var br = 1;
             var br2 = 2;
-
+            (application as MyApplication).apiService.addLocationData(point)
+/*
             val database = FirebaseFirestore.getInstance()
 
             val user_location: MutableMap<String, GeoPoint> = HashMap()
@@ -85,9 +79,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
                     })
                     .addOnFailureListener(OnFailureListener { e -> Log.w(TAG, "Error adding document", e) })
 
-            database.collection("locations").document().update("isClean",false)
-
-
+            database.collection("locations").document().update("isClean",false)*/
 
 
             val marker = MarkerOptions()

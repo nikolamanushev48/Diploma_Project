@@ -1,13 +1,18 @@
 package com.example.google_maps_try
 
-import android.app.Activity
 import android.content.ContentValues
-import android.content.Intent
+import android.content.ContentValues.TAG
 import android.graphics.Bitmap
 import android.util.Log
 import androidx.core.net.toUri
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.Marker
+import com.google.android.gms.tasks.OnFailureListener
+import com.google.android.gms.tasks.OnSuccessListener
+import com.google.firebase.firestore.DocumentReference
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.GeoPoint
 import com.google.firebase.storage.FirebaseStorage
@@ -24,7 +29,8 @@ class ApiServiceImpl : ApiService {
 
     val lifeData : MutableLiveData<List<PinData>> = MutableLiveData(listOf())
 
-    override fun locationData(): LiveData<List<PinData>> {
+
+    override fun locationLoadData(): LiveData<List<PinData>> {
         return lifeData;
     }
 
@@ -74,13 +80,87 @@ class ApiServiceImpl : ApiService {
         }
     }
 
-    override fun deleteLocation(docId: String) {
-        TODO("Not yet implemented")
+
+    override fun displayImage(documentId: String) {
+
+        val database = FirebaseFirestore.getInstance()
+
+        database.collection("locations").document(documentId)
+            .get()
+            .addOnCompleteListener{ task ->
+
+                if (task.isSuccessful) {
+                    val temp = task.result.getString("photoAddress")
+
+                    if(temp != null){
+                        val photoRef = storageRef.child("photos")
+                            .child(temp)
+
+
+
+                        val localFile = File.createTempFile("images", "jpg")
+
+                        photoRef.getFile(localFile).addOnSuccessListener {
+                            imageViewRef.setImageURI(localFile.toUri())
+                        }
+                    }
+
+                } else {
+                    Log.w(ContentValues.TAG, "Error getting documents.", task.exception)
+                }
+
+            }
+    }
+
+    override fun addLocationData(position: LatLng) {
+
+            val database = FirebaseFirestore.getInstance()
+
+            val user_location: MutableMap<String, GeoPoint> = HashMap()
+
+            user_location.put("coordinates",GeoPoint(position.latitude,position.longitude))
+
+            database.collection("locations")
+                .add(user_location)
+                .addOnSuccessListener(OnSuccessListener<DocumentReference> {
+                        documentReference -> Log.d(TAG, "DocumentSnapshot added with ID: " + documentReference.id)
+                })
+                .addOnFailureListener(OnFailureListener { e -> Log.w(TAG, "Error adding document", e) })
+
+            database.collection("locations").document().update("isClean",false)
+
+
+        }
+
+
+    override fun deleteLocation(marker : Marker) : Boolean {
+        var succeeded : Boolean = false
+        val database = FirebaseFirestore.getInstance()
+        Log.i("loc", "CORRECT LOCATION ID REGULAR!!!!")
+                database.collection("locations").whereEqualTo("coordinates", GeoPoint(marker.position.latitude, marker.position.longitude))
+                    .get().addOnCompleteListener() {
+
+
+                        val docSnapshot: DocumentSnapshot = it.result.documents.get(0)
+                        val docID: String = docSnapshot.id
+                        database.collection("locations").document(docID).delete()
+                            .addOnCompleteListener() { task ->
+                                if (task.isSuccessful) {
+                                    println("LOCATION DELETED" + task.result)
+                                    succeeded = true
+                                } else {
+                                    println("NOT SUCCEEDED")
+                                }
+                            }
+
+                    }
+
+        return succeeded
     }
 
     private fun getLocations() {
 
-        val database = FirebaseFirestore.getInstance()
+
         /*
         database.collection("locations")
             .get()
@@ -105,7 +185,7 @@ class ApiServiceImpl : ApiService {
                 lifeData.postValue(list)
 
             }*/
-
+        val database = FirebaseFirestore.getInstance()
         database.collection("locations")
             .addSnapshotListener { value, e ->
 

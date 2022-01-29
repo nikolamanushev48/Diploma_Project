@@ -7,7 +7,6 @@ import android.content.pm.PackageManager
 import android.graphics.Color
 import android.location.Location
 import android.os.Bundle
-import android.util.Log
 import android.widget.Button
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
@@ -52,6 +51,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         ) {
             if (it.resultCode == Activity.RESULT_OK) {
                 //mapGeneration()
+//                (application as MyApplication).apiService.locationData().observe(this, {
+//                    updateMap(it)
+//                })
             }
         }
 
@@ -61,7 +63,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         setContentView(R.layout.activity_main)
 
 
-        (application as MyApplication).apiService.locationData().observe(this, {
+        (application as MyApplication).apiService.locationLoadData().observe(this, {
             updateMap(it)
         })
 
@@ -93,25 +95,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 it.remove()
                 println("MARKER CLICKED !!!!!!!!!!!!!!!!!!!!!!")
 
-
-                Log.i("loc", "CORRECT LOCATION ID REGULAR!!!!")
-                database.collection("locations").whereEqualTo("coordinates", GeoPoint(it.position.latitude, it.position.longitude))
-                    .get().addOnCompleteListener() {
-
-                        val docSnapshot: DocumentSnapshot = it.result.documents.get(0)
-                        val docID: String = docSnapshot.id
-                        database.collection("locations").document(docID).delete()
-                            .addOnCompleteListener() { task ->
-                                if (task.isSuccessful) {
-                                    println("LOCATION DELETED" + task.result)
-                                    br_markers--
-                                    pinCount.setText(br_markers.toString())
-                                } else {
-                                    println("NOT SUCCEEDED")
-                                }
-                            }
-
-                    }
+                if((application as MyApplication).apiService.deleteLocation(it)){
+                    br_markers--
+                    pinCount.setText(br_markers.toString())
+                }
 
                 mMap!!.setOnMarkerClickListener(null);
                 true
@@ -151,63 +138,17 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
 
-//    fun mapGeneration(){
-//
-//        mMap?.clear()
-//
-//        database.collection("locations")
-//            .get()
-//            .addOnCompleteListener{ task ->
-//
-//                if (task.isSuccessful) {
-//
-//                    for (document in task.result) {
-//                        val geoPoint = document.getGeoPoint("coordinates")
-//
-//                        Log.i("geo",geoPoint!!.latitude.toString())
-//
-//                        val isClean = document.getBoolean("isClean")
-//
-//                        if(isClean == true){
-//                            mMap?.addMarker(MarkerOptions().position(LatLng(geoPoint.latitude, geoPoint.longitude)).icon(BitmapDescriptorFactory.defaultMarker(
-//                                BitmapDescriptorFactory.HUE_GREEN)));
-//                        }else{
-//
-//                                val marker = MarkerOptions()
-//                                    .position(LatLng(geoPoint.latitude, geoPoint.longitude))
-//                                mMap?.addMarker(marker)
-//                            }
-//
-//                        result_loc.put(geoPoint,document.id)
-//
-//
-//                        Location.distanceBetween(positionSave.latitude, positionSave.longitude, geoPoint.latitude, geoPoint.longitude, result_distance)
-//
-//
-//
-//                    }
-//
-//                } else {
-//                    Log.w(TAG, "Error getting documents.", task.exception)
-//                }
-//
-//            }
-//    }
-
-
-
 override fun onMapReady(googleMap: GoogleMap) {
     mMap = googleMap
     checkLocationPermissions()
 
     pinCount = findViewById(R.id.numberPins)
 
-    val data = (application as MyApplication).apiService.locationData().value
+    val data = (application as MyApplication).apiService.locationLoadData().value
 
     if (data != null) {
         updateMap(data)
     }
-    //mapGeneration()
 
     mMap!!.setOnMarkerClickListener {
         val positionMarker = GeoPoint(it.position.latitude,it.position.longitude)

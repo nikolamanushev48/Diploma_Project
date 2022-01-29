@@ -252,6 +252,8 @@ class MarkerActivity : AppCompatActivity() {
         imageViewRef = findViewById(R.id.imageView)
 
 
+        (application as MyApplication).apiService.displayImage(documentId)
+/*
 
         val database = FirebaseFirestore.getInstance()
 
@@ -279,9 +281,7 @@ class MarkerActivity : AppCompatActivity() {
                     Log.w(ContentValues.TAG, "Error getting documents.", task.exception)
                 }
 
-            }
-
-
+            }*/
 
 
     }
