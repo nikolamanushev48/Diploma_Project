@@ -7,7 +7,6 @@ import android.provider.MediaStore
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
-import android.util.Log
 import android.widget.Button
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
