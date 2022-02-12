@@ -1,7 +1,5 @@
 package com.example.google_maps_try
 
-
-import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
@@ -27,140 +25,114 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private var mMap: GoogleMap? = null
 
-    lateinit var pinCount : TextView
+    private lateinit var pinCount: TextView
 
-    lateinit var fusedLocationProviderClient: FusedLocationProviderClient
+    private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
 
-    lateinit var positionSave : Location
+    private lateinit var positionSave: Location
 
-    val result_distance = FloatArray(100)
+    private var brMarkers: Int = 0
 
-    var br_markers : Int = 0
-
-    val result_loc: MutableMap<GeoPoint,String> = HashMap()
-
-    lateinit var documentId : String
-
-    lateinit var tempDocId : String
-
-    val database = FirebaseFirestore.getInstance()
+    private val markerSave: MutableMap<GeoPoint, String> = HashMap()
 
     private val getResult =
-        registerForActivityResult(
-            ActivityResultContracts.StartActivityForResult()
-        ) {
-            if (it.resultCode == Activity.RESULT_OK) {
-                //mapGeneration()
-//                (application as MyApplication).apiService.locationData().observe(this, {
-//                    updateMap(it)
-//                })
-            }
-        }
-
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {}
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-
-        (application as MyApplication).apiService.locationLoadData().observe(this, {
-            updateMap(it)
-        })
+        (application as MyApplication).apiService.locationLoadData().observe(this) { updateMap(it) }
 
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
         positionSave = Location("")
 
-
-        val mapFragment = supportFragmentManager
-                .findFragmentById(R.id.map) as SupportMapFragment
+        val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
-
 
         val addButton: Button = findViewById(R.id.location_button)
 
-        addButton.setOnClickListener(){
-
-           val intent= Intent(this, MapActivity::class.java).putExtra("docCleaned",0)
-           finish();
-           overridePendingTransition(0, 0);
-           startActivity(intent);
-           println("In map activity!!!")
+        addButton.setOnClickListener {
+            val intent = Intent(this, MapActivity::class.java).putExtra("docCleaned", 0)
+            finish()
+            overridePendingTransition(0, 0)
+            startActivity(intent)
         }
 
-
         val delButton: Button = findViewById(R.id.delete_button)
-        delButton.setOnClickListener() {
-
+        delButton.setOnClickListener {
             mMap!!.setOnMarkerClickListener {
                 it.remove()
-                println("MARKER CLICKED !!!!!!!!!!!!!!!!!!!!!!")
 
-                if((application as MyApplication).apiService.deleteLocation(it)){
-                    br_markers--
-                    pinCount.setText(br_markers.toString())
+                if ((application as MyApplication).apiService.deleteLocation(it)) {
+                    brMarkers--
+                    pinCount.text = brMarkers.toString()
                 }
 
-                mMap!!.setOnMarkerClickListener(null);
+                mMap!!.setOnMarkerClickListener(null)
                 true
             }
         }
-
-
-
-
     }
 
 
-    fun updateMap(data : List<PinData>){
-        if(mMap != null){
+    private fun updateMap(data: List<PinData>) {
+        if (mMap != null) {
             mMap?.clear()
-            for(pinData in data){
+            for (pinData in data) {
 
-                if(pinData.isCleaned){
-                    mMap?.addMarker(MarkerOptions().position(LatLng(pinData.latitude, pinData.longitude)).icon(BitmapDescriptorFactory.defaultMarker(
-                        BitmapDescriptorFactory.HUE_GREEN)));
-                }else {
-                    val marker = MarkerOptions()
-                        .position(LatLng(pinData.latitude, pinData.longitude))
+                if (pinData.isCleaned) {
+                    mMap?.addMarker(
+                        MarkerOptions()
+                            .position(LatLng(pinData.latitude, pinData.longitude))
+                            .icon(
+                                BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)
+                            )
+                    )
+                } else {
+                    val marker = MarkerOptions().position(LatLng(pinData.latitude, pinData.longitude))
                     mMap!!.addMarker(marker)
                 }
 
-                result_loc.put(GeoPoint(pinData.latitude,pinData.longitude),pinData.documentId)
+                markerSave.put(GeoPoint(pinData.latitude, pinData.longitude), pinData.documentId)
             }
 
-
-
-            br_markers = data.size
-            pinCount.setText(br_markers.toString());
-
-
+            brMarkers = data.size
+            pinCount.text = brMarkers.toString()
         }
     }
 
 
-override fun onMapReady(googleMap: GoogleMap) {
-    mMap = googleMap
-    checkLocationPermissions()
+    override fun onMapReady(googleMap: GoogleMap) {
+        mMap = googleMap
+        checkLocationPermissions()
 
-    pinCount = findViewById(R.id.numberPins)
+        pinCount = findViewById(R.id.numberPins)
 
-    val data = (application as MyApplication).apiService.locationLoadData().value
+        val data = (application as MyApplication).apiService.locationLoadData().value
 
-    if (data != null) {
-        updateMap(data)
+        if (data != null) {
+            updateMap(data)
+        }
+
+        mMap!!.setOnMarkerClickListener {
+            val positionMarker = GeoPoint(it.position.latitude, it.position.longitude)
+
+            val intentMarkerActivity =
+                Intent(this, MarkerActivity::class.java)
+                    .putExtra("tempMarkerIntent", markerSave.get(positionMarker))
+            overridePendingTransition(0, 0)
+            getResult.launch(intentMarkerActivity)
+            true
+        }
     }
 
-    mMap!!.setOnMarkerClickListener {
-        val positionMarker = GeoPoint(it.position.latitude,it.position.longitude)
 
-        val intentMarkerActivity= Intent(this, MarkerActivity::class.java).putExtra("tempMarkerIntent",result_loc.get(positionMarker))
-        overridePendingTransition(0, 0);
-        getResult.launch(intentMarkerActivity)
-        //startActivity(intentMarkerActivity);
-        println("In marker activity!!!")
-        true
-    }
-}
+
+
+
+
+
 
 
 
@@ -172,13 +144,11 @@ override fun onMapReady(googleMap: GoogleMap) {
     private fun checkLocationPermissions(){
         val task = fusedLocationProviderClient.lastLocation
 
-        println("IN FUNC")
 
         if(ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
             ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED){
-            println("IN ERRR")
-                ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION), 101)
-                return
+            ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION), 101)
+            return
         }
 
 
@@ -190,11 +160,8 @@ override fun onMapReady(googleMap: GoogleMap) {
                 positionSave = location
                 mMap?.addMarker(MarkerOptions().position(LatLng(location.latitude, location.longitude)).title("MyPosition"))
 
-                val radius:Double = 3500.0
+                val radius = 3500.0
 
-                for (i in 0..br_markers) {
-                        println("IN BORDERS WITH THE RADIUS " + result_distance[0])
-                }
 
                 mMap?.addCircle(
                     CircleOptions()
@@ -209,9 +176,4 @@ override fun onMapReady(googleMap: GoogleMap) {
         }
     }
 
-
-
 }
-
-
-

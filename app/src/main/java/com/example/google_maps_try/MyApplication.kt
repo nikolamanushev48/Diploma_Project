@@ -13,8 +13,6 @@ class MyApplication : Application() {
 
         apiService = ApiServiceImpl()
 
-
-
     }
 }
 

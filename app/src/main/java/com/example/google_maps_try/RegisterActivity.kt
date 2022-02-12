@@ -8,7 +8,7 @@ import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import com.google.firebase.auth.FirebaseAuth
-//import kotlinx.android.synthetic.main.activity_loginorig.*
+
 
 class RegisterActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -19,17 +19,17 @@ class RegisterActivity : AppCompatActivity() {
         val tvSignIn: TextView = findViewById(R.id.textView)
         val mFirebaseAuth: FirebaseAuth = FirebaseAuth.getInstance()
         val emailId: EditText = findViewById(R.id.editText)
-        val password:EditText = findViewById<EditText>(R.id.editText2)
+        val password:EditText = findViewById(R.id.editText2)
         val btnSignUp: Button = findViewById(R.id.button2)
 
         tvSignIn.setOnClickListener{
             val intent = Intent(this, RegisterActivity::class.java)
-            finish();
-            overridePendingTransition(0, 0);
-            startActivity(intent);
+            finish()
+            overridePendingTransition(0, 0)
+            startActivity(intent)
         }
 
-        btnSignUp.setOnClickListener() {
+        btnSignUp.setOnClickListener {
 
                 val email = emailId.text.toString()
                 val pwd: String = password.text.toString()
