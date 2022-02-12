@@ -1,4 +1,4 @@
-package com.example.google_maps_try
+package org.elsys.diploma
 
 import android.app.Application
 import android.graphics.Bitmap
@@ -18,7 +18,7 @@ class MyApplication : Application() {
 
 
 interface ApiService{
-    fun locationLoadData() : LiveData<List<PinData>>
+    fun locationLoadData() : LiveData<List<MarkerData>>
     fun imageSave(image : Bitmap,documentId : String,trashCleanedMode : Boolean)
     fun deleteLocation(marker : Marker) : Boolean
     fun displayImage(documentId: String)

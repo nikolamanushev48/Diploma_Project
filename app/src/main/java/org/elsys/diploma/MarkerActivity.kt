@@ -1,4 +1,4 @@
-package com.example.google_maps_try
+package org.elsys.diploma
 
 import android.app.Activity
 import androidx.appcompat.app.AppCompatActivity
@@ -15,6 +15,7 @@ import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageReference
 import android.annotation.SuppressLint
 import android.widget.ImageView
+import com.example.google_maps_try.R
 
 
 lateinit var storageRef: StorageReference
@@ -69,8 +70,6 @@ class MarkerActivity : AppCompatActivity() {
 
         val intent : Intent = intent
         documentId = intent.getStringExtra("tempMarkerIntent")!!
-
-        Log.i("marker",documentId)
 
 
         val buttonMarker: Button = findViewById(R.id.buttonMarker)

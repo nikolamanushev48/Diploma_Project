@@ -18,9 +18,9 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Google_Maps_Try"
-        android:name = ".MyApplication">
+        android:name = "org.elsys.diploma.MyApplication">
         <activity
-            android:name=".MarkerActivity"
+            android:name="org.elsys.diploma.MarkerActivity"
             android:exported="false"
             android:label="@string/title_activity_marker"
             android:theme="@style/Theme.Google_Maps_Try.NoActionBar" />
@@ -30,9 +30,16 @@
             android:value="@string/google_maps_key" />
 
         <activity
-            android:name=".LoginActivity"
+            android:name="org.elsys.diploma.LoginActivity"
             android:label="@string/title_activity_login"
             android:exported="true">
+
+        </activity>
+
+        <activity
+            android:name="org.elsys.diploma.MainActivity"
+            android:exported="true"
+            android:label="@string/MainPage">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -41,19 +48,12 @@
         </activity>
 
         <activity
-            android:name=".MainActivity"
-            android:exported="true"
-            android:label="@string/MainPage">
-
-        </activity>
-
-        <activity
-            android:name=".MapActivity"
+            android:name="org.elsys.diploma.MapActivity"
             android:label="@string/title_activity_maps">
 
         </activity>
         <activity
-            android:name=".RegisterActivity"
+            android:name="org.elsys.diploma.RegisterActivity"
             android:label="@string/Registration">
 
         </activity>

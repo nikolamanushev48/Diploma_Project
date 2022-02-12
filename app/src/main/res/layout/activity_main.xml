@@ -18,7 +18,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.0"
-        tools:context=".MainActivity" />
+        tools:context="org.elsys.diploma.MainActivity" />
 
     <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/location_button"

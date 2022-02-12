@@ -1,4 +1,4 @@
-package com.example.google_maps_try
+package org.elsys.diploma
 
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -10,6 +10,7 @@ import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import com.example.google_maps_try.R
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.GoogleMap
@@ -76,7 +77,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
 
-    private fun updateMap(data: List<PinData>) {
+    private fun updateMap(data: List<MarkerData>) {
         if (mMap != null) {
             mMap?.clear()
             for (pinData in data) {
