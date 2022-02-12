@@ -39,6 +39,18 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private val getResult =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {}
 
+
+    private val onMarkerClickListener = { it : Marker ->
+            val positionMarker = GeoPoint(it.position.latitude, it.position.longitude)
+
+            val intentMarkerActivity =
+                Intent(this, MarkerActivity::class.java)
+                    .putExtra("tempMarkerIntent", markerSave.get(positionMarker))
+            overridePendingTransition(0, 0)
+            getResult.launch(intentMarkerActivity)
+        true
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -55,8 +67,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
         addButton.setOnClickListener {
             val intent = Intent(this, MapActivity::class.java).putExtra("docCleaned", 0)
-            finish()
-            overridePendingTransition(0, 0)
             startActivity(intent)
         }
 
@@ -70,7 +80,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                     pinCount.text = brMarkers.toString()
                 }
 
-                mMap!!.setOnMarkerClickListener(null)
+                mMap!!.setOnMarkerClickListener(onMarkerClickListener)
                 true
             }
         }
@@ -116,16 +126,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             updateMap(data)
         }
 
-        mMap!!.setOnMarkerClickListener {
-            val positionMarker = GeoPoint(it.position.latitude, it.position.longitude)
+        mMap!!.setOnMarkerClickListener(onMarkerClickListener)
 
-            val intentMarkerActivity =
-                Intent(this, MarkerActivity::class.java)
-                    .putExtra("tempMarkerIntent", markerSave.get(positionMarker))
-            overridePendingTransition(0, 0)
-            getResult.launch(intentMarkerActivity)
-            true
-        }
     }
 
 

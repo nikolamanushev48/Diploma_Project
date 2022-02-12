@@ -1,7 +1,5 @@
 package org.elsys.diploma
 
-
-import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import android.widget.Button
@@ -13,7 +11,6 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.CircleOptions
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
-
 
 
 class MapActivity : AppCompatActivity(), OnMapReadyCallback {
@@ -29,10 +26,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
 
         val button: Button = findViewById(R.id.maps_close_button)
         button.setOnClickListener() {
-            val intent = Intent(this, MainActivity::class.java)
             finish()
-            overridePendingTransition(0, 0)
-            startActivity(intent)
         }
     }
 
@@ -50,9 +44,9 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
 
             mMap.addMarker(marker)
 
-            val intent = Intent(this, MainActivity::class.java)
+
             finish()
-            startActivity(intent)
+
         }
 
     }

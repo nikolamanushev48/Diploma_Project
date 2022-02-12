@@ -2,6 +2,7 @@ package org.elsys.diploma
 
 import android.content.ContentValues
 import android.graphics.Bitmap
+import android.net.Uri
 import android.util.Log
 import androidx.core.net.toUri
 import androidx.lifecycle.LiveData
@@ -22,13 +23,16 @@ class ApiServiceImpl : ApiService {
 
     private val lifeData: MutableLiveData<List<MarkerData>> = MutableLiveData(listOf())
 
+    private val storageRef = FirebaseStorage.getInstance().reference
+
+    private val database get() = FirebaseFirestore.getInstance()
+
     override fun locationLoadData(): LiveData<List<MarkerData>> {
         return lifeData
     }
 
     private fun getLocations() {
 
-        val database = FirebaseFirestore.getInstance()
         database.collection("locations").addSnapshotListener { value, e ->
             val list: MutableList<MarkerData> = mutableListOf()
 
@@ -51,8 +55,6 @@ class ApiServiceImpl : ApiService {
 
     override fun addLocationData(position: LatLng) {
 
-        val database = FirebaseFirestore.getInstance()
-
         val userLocation: MutableMap<String, GeoPoint> = HashMap()
 
         userLocation.put("coordinates", GeoPoint(position.latitude, position.longitude))
@@ -68,8 +70,7 @@ class ApiServiceImpl : ApiService {
         database.collection("locations").document().update("isClean", false)
     }
 
-    override fun imageSave(image: Bitmap, documentId: String, trashCleanedMode: Boolean) {
-        val storageRef = FirebaseStorage.getInstance().reference
+    override fun imageSave(image: Bitmap, documentId: String, trashCleanedMode: Boolean,onSuccess : (uri : Uri)->Unit) {
 
         val tempAddress = UUID.randomUUID().toString()
 
@@ -79,31 +80,25 @@ class ApiServiceImpl : ApiService {
         image.compress(Bitmap.CompressFormat.JPEG, 100, imageByteSave)
         val dataBytes = imageByteSave.toByteArray()
 
+        val localFile = File.createTempFile("images", "jpg")
+            localFile.writeBytes(dataBytes)
+
         photoRef.putBytes(dataBytes).addOnCompleteListener {
 
-            val localFile = File.createTempFile("images", "jpg")
+            onSuccess(localFile.toUri())
 
-            photoRef
-                .getFile(localFile)
-                .addOnSuccessListener {
-                    imageViewRef.setImageURI(localFile.toUri())
+            val docRef = database.collection("locations").document(documentId)
 
-                    val database = FirebaseFirestore.getInstance()
-                    val docRef = database.collection("locations").document(documentId)
+            if (trashCleanedMode) {
+                docRef.update("photoAddress", tempAddress, "isClean", true)
+            } else {
+                docRef.update("photoAddress", tempAddress)
+            }
 
-                    if (trashCleanedMode) {
-                        docRef.update("photoAddress", tempAddress, "isClean", true).addOnCompleteListener{}
-                    } else {
-                        docRef.update("photoAddress", tempAddress)
-                    }
-                }
-                .addOnFailureListener { be -> Log.w(ContentValues.TAG, "Error getting file", be) }
         }
     }
 
-    override fun displayImage(documentId: String) {
-
-        val database = FirebaseFirestore.getInstance()
+    override fun displayImage(documentId: String,onSuccess : (uri : Uri)->Unit) {
 
         database.collection("locations").document(documentId).get().addOnCompleteListener { task ->
             if (task.isSuccessful) {
@@ -114,7 +109,7 @@ class ApiServiceImpl : ApiService {
 
                     val localFile = File.createTempFile("images", "jpg")
 
-                    photoRef.getFile(localFile).addOnSuccessListener { imageViewRef.setImageURI(localFile.toUri()) }
+                    photoRef.getFile(localFile).addOnSuccessListener { onSuccess(localFile.toUri()) }
                 }
             } else {
                 Log.w(ContentValues.TAG, "Error getting documents.", task.exception)
@@ -124,8 +119,8 @@ class ApiServiceImpl : ApiService {
 
     override fun deleteLocation(marker: Marker): Boolean {
         var succeeded = false
-        val database = FirebaseFirestore.getInstance()
-        Log.i("loc", "CORRECT LOCATION ID REGULAR!!!!")
+
+
         database
             .collection("locations")
             .whereEqualTo("coordinates",
