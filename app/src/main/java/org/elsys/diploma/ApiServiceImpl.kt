@@ -1,7 +1,6 @@
-package com.example.google_maps_try
+package org.elsys.diploma
 
-
-import android.content.ContentValues.TAG
+import android.content.ContentValues
 import android.graphics.Bitmap
 import android.util.Log
 import androidx.core.net.toUri
@@ -21,9 +20,9 @@ class ApiServiceImpl : ApiService {
 
     init { getLocations() }
 
-    private val lifeData: MutableLiveData<List<PinData>> = MutableLiveData(listOf())
+    private val lifeData: MutableLiveData<List<MarkerData>> = MutableLiveData(listOf())
 
-    override fun locationLoadData(): LiveData<List<PinData>> {
+    override fun locationLoadData(): LiveData<List<MarkerData>> {
         return lifeData
     }
 
@@ -31,7 +30,7 @@ class ApiServiceImpl : ApiService {
 
         val database = FirebaseFirestore.getInstance()
         database.collection("locations").addSnapshotListener { value, e ->
-            val list: MutableList<PinData> = mutableListOf()
+            val list: MutableList<MarkerData> = mutableListOf()
 
             if (e == null) {
 
@@ -40,7 +39,8 @@ class ApiServiceImpl : ApiService {
                     val isClean = document.getBoolean("isClean") ?: false
 
                     if (geoPoint != null) {
-                        val pinData = PinData(geoPoint.latitude, geoPoint.longitude, isClean, document.id)
+                        val pinData =
+                            MarkerData(geoPoint.latitude, geoPoint.longitude, isClean, document.id)
                         list.add(pinData)
                     }
                 }
@@ -61,9 +61,9 @@ class ApiServiceImpl : ApiService {
             .collection("locations")
             .add(userLocation)
             .addOnSuccessListener { documentReference ->
-                Log.d(TAG, "DocumentSnapshot added with ID: " + documentReference.id)
+                Log.d(ContentValues.TAG, "DocumentSnapshot added with ID: " + documentReference.id)
             }
-            .addOnFailureListener { e -> Log.w(TAG, "Error adding document", e) }
+            .addOnFailureListener { e -> Log.w(ContentValues.TAG, "Error adding document", e) }
 
         database.collection("locations").document().update("isClean", false)
     }
@@ -97,7 +97,7 @@ class ApiServiceImpl : ApiService {
                         docRef.update("photoAddress", tempAddress)
                     }
                 }
-                .addOnFailureListener { be -> Log.w(TAG, "Error getting file", be) }
+                .addOnFailureListener { be -> Log.w(ContentValues.TAG, "Error getting file", be) }
         }
     }
 
@@ -117,7 +117,7 @@ class ApiServiceImpl : ApiService {
                     photoRef.getFile(localFile).addOnSuccessListener { imageViewRef.setImageURI(localFile.toUri()) }
                 }
             } else {
-                Log.w(TAG, "Error getting documents.", task.exception)
+                Log.w(ContentValues.TAG, "Error getting documents.", task.exception)
             }
         }
     }
@@ -128,7 +128,9 @@ class ApiServiceImpl : ApiService {
         Log.i("loc", "CORRECT LOCATION ID REGULAR!!!!")
         database
             .collection("locations")
-            .whereEqualTo("coordinates", GeoPoint(marker.position.latitude, marker.position.longitude))
+            .whereEqualTo("coordinates",
+                GeoPoint(marker.position.latitude, marker.position.longitude)
+            )
             .get()
             .addOnCompleteListener {
                 val docSnapshot: DocumentSnapshot = it.result.documents.get(0)
@@ -147,4 +149,3 @@ class ApiServiceImpl : ApiService {
     }
 
 }
-
