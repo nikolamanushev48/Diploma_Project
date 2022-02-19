@@ -1,35 +1,25 @@
 package org.elsys.diploma
 
 import android.content.ContentValues
-import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
-import android.os.Handler
-import android.os.Looper
 import android.util.Log
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-
-
 import androidx.core.net.toUri
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
-import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
-import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.GeoPoint
 import com.google.firebase.storage.FirebaseStorage
-import kotlinx.coroutines.delay
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.util.*
-import kotlin.collections.HashMap
-import kotlin.properties.Delegates
+
 
 class ApiServiceImpl : AppCompatActivity(), ApiService {
 
@@ -163,7 +153,7 @@ class ApiServiceImpl : AppCompatActivity(), ApiService {
     }
 
     override fun deleteLocation(marker: Marker, onComplete: (bool: Boolean) -> Unit) {
-        var succeeded = true
+        var succeeded: Boolean
 
 
 

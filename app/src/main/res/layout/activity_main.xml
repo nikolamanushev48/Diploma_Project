@@ -13,7 +13,7 @@
         android:layout_height="0dp"
         android:fragmentAllowEnterTransitionOverlap="@+id/text_view_id_map"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/location_button"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.0"

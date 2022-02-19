@@ -2,7 +2,6 @@ package org.elsys.diploma
 
 import android.graphics.Color
 import android.os.Bundle
-import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import com.example.google_maps_try.R
 import com.google.android.gms.maps.GoogleMap
@@ -21,7 +20,8 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
 
-        val mapFragment = supportFragmentManager.findFragmentById(R.id.map_secondary_page) as SupportMapFragment
+        val mapFragment =
+            supportFragmentManager.findFragmentById(R.id.map_secondary_page) as SupportMapFragment
         mapFragment.getMapAsync(this)
     }
 
@@ -29,9 +29,12 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         mMap = googleMap
 
         val position = LatLng(41.4314, 25.0519)
-        mMap.addCircle(CircleOptions().center(position).radius(3500.0).strokeWidth(3f).fillColor(Color.argb(70, 240, 37, 14)))
+        mMap.addCircle(
+            CircleOptions().center(position).radius(3500.0).strokeWidth(3f)
+                .fillColor(Color.argb(70, 240, 37, 14))
+        )
 
-        mMap.setOnMapClickListener() { point ->
+        mMap.setOnMapClickListener { point ->
 
             (application as MyApplication).apiService.addLocationData(point)
 

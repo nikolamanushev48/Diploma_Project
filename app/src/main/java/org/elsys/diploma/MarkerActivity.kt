@@ -1,17 +1,17 @@
 package org.elsys.diploma
 
 import android.app.Activity
-import androidx.appcompat.app.AppCompatActivity
-import android.os.Bundle
-import android.provider.MediaStore
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.os.Bundle
+import android.provider.MediaStore
 import android.widget.Button
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.ContextCompat
 import android.widget.ImageView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import com.example.google_maps_try.R
 import com.google.firebase.auth.FirebaseAuth
 
@@ -38,7 +38,7 @@ class MarkerActivity : AppCompatActivity() {
                     document.documentId,
                     tempButtonResult == 2//checking if this condition is true!!!
 
-                ){
+                ) {
                     imageViewRef.setImageURI(it)
                 }
 
@@ -101,13 +101,17 @@ class MarkerActivity : AppCompatActivity() {
 
         val buttonAddPhoto: Button = findViewById(R.id.buttonAddPhoto)
 
-       val user = FirebaseAuth.getInstance().currentUser
+        val user = FirebaseAuth.getInstance().currentUser
 
         buttonAddPhoto.setOnClickListener {
-            if(user!!.email == document.creator){
+            if (user!!.email == document.creator) {
                 cameraPermission()
-            }else{
-                Toast.makeText(this, "You are not allowed to add the current photo!", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(
+                    this,
+                    "You are not allowed to add the current photo!",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
 
@@ -123,7 +127,7 @@ class MarkerActivity : AppCompatActivity() {
         imageViewRef = findViewById(R.id.imageView)
 
 
-        (application as MyApplication).apiService.displayImage(document.documentId){
+        (application as MyApplication).apiService.displayImage(document.documentId) {
             imageViewRef.setImageURI(it)
         }
 

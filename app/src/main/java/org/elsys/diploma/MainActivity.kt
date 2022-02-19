@@ -14,11 +14,12 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.*
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.Marker
+import com.google.android.gms.maps.model.MarkerOptions
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.*
-import java.util.*
-import kotlin.math.log
+import com.google.firebase.firestore.GeoPoint
 
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback {
@@ -123,7 +124,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                     )
                 } else {
                     val firebase = FirebaseAuth.getInstance()
-                    val user = firebase.currentUser;
+                    val user = firebase.currentUser
 
                     if (document.creator == user!!.email) {
                         mMap?.addMarker(

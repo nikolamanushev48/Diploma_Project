@@ -8,7 +8,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.google_maps_try.R
-import com.google.firebase.auth.FirebaseAuth
+
 
 class LoginActivity : AppCompatActivity() {
 
@@ -64,7 +64,7 @@ class LoginActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
-        if((application as MyApplication).apiService.currentUser() != null){
+        if ((application as MyApplication).apiService.currentUser() != null) {
             startActivity(Intent(this, MainActivity::class.java))
             finish()
         }
