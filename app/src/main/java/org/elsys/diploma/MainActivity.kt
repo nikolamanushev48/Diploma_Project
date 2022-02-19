@@ -1,15 +1,13 @@
 package org.elsys.diploma
 
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.graphics.Color
 import android.location.Location
 import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
 import com.example.google_maps_try.R
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
@@ -17,9 +15,10 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.*
-import java.sql.DriverManager.println
 import java.util.*
+import kotlin.math.log
 
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback {
@@ -34,20 +33,22 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private var brMarkers: Int = 0
 
-    private val markerSave: MutableMap<GeoPoint, String> = HashMap()
+    private val markerSave: MutableMap<GeoPoint, MarkerData> = HashMap()
 
     private val getResult =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {}
 
 
-    private val onMarkerClickListener = { it : Marker ->
-            val positionMarker = GeoPoint(it.position.latitude, it.position.longitude)
+    private val onMarkerClickListener = { it: Marker ->
+        val positionMarker = GeoPoint(it.position.latitude, it.position.longitude)
 
-            val intentMarkerActivity =
-                Intent(this, MarkerActivity::class.java)
-                    .putExtra("tempMarkerIntent", markerSave.get(positionMarker))
-            overridePendingTransition(0, 0)
-            getResult.launch(intentMarkerActivity)
+        val intentMarkerActivity =
+            Intent(this, MarkerActivity::class.java)
+                .putExtra("tempMarkerIntent", markerSave.get(positionMarker))
+
+        overridePendingTransition(0, 0)
+
+        getResult.launch(intentMarkerActivity)
         true
     }
 
@@ -65,6 +66,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
         val addButton: Button = findViewById(R.id.location_button)
 
+
         addButton.setOnClickListener {
             val intent = Intent(this, MapActivity::class.java).putExtra("docCleaned", 0)
             startActivity(intent)
@@ -72,17 +74,36 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
         val delButton: Button = findViewById(R.id.delete_button)
         delButton.setOnClickListener {
-            mMap!!.setOnMarkerClickListener {
-                it.remove()
+            mMap!!.setOnMarkerClickListener { marker ->
 
-                if ((application as MyApplication).apiService.deleteLocation(it)) {
-                    brMarkers--
-                    pinCount.text = brMarkers.toString()
+
+                (application as MyApplication).apiService.deleteLocation(marker) { succeed ->
+                    if (succeed) {
+                        marker.remove()
+                        brMarkers--
+                        pinCount.text = brMarkers.toString()
+                    } else {
+                        Toast.makeText(
+                            this,
+                            "Deleting this location is not permitted!",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
                 }
+
 
                 mMap!!.setOnMarkerClickListener(onMarkerClickListener)
                 true
             }
+        }
+
+        val logout: Button = findViewById(R.id.logout)
+        logout.setOnClickListener {
+
+            (application as MyApplication).apiService.logout()
+            startActivity(Intent(this, LoginActivity::class.java))
+            finish()
+
         }
     }
 
@@ -90,22 +111,38 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun updateMap(data: List<MarkerData>) {
         if (mMap != null) {
             mMap?.clear()
-            for (pinData in data) {
+            for (document in data) {
 
-                if (pinData.isCleaned) {
+                if (document.isCleaned) {
                     mMap?.addMarker(
                         MarkerOptions()
-                            .position(LatLng(pinData.latitude, pinData.longitude))
+                            .position(LatLng(document.latitude, document.longitude))
                             .icon(
                                 BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)
                             )
                     )
                 } else {
-                    val marker = MarkerOptions().position(LatLng(pinData.latitude, pinData.longitude))
-                    mMap!!.addMarker(marker)
+                    val firebase = FirebaseAuth.getInstance()
+                    val user = firebase.currentUser;
+
+                    if (document.creator == user!!.email) {
+                        mMap?.addMarker(
+                            MarkerOptions()
+                                .position(LatLng(document.latitude, document.longitude))
+                                .icon(
+                                    BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW)
+                                )
+                        )
+                    } else {
+                        val marker =
+                            MarkerOptions().position(LatLng(document.latitude, document.longitude))
+                        mMap!!.addMarker(marker)
+                    }
+
+
                 }
 
-                markerSave.put(GeoPoint(pinData.latitude, pinData.longitude), pinData.documentId)
+                markerSave.put(GeoPoint(document.latitude, document.longitude), document)
             }
 
             brMarkers = data.size
@@ -116,7 +153,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
-        checkLocationPermissions()
 
         pinCount = findViewById(R.id.numberPins)
 
@@ -130,53 +166,5 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     }
 
-
-
-
-
-
-
-
-
-
-
-
-//GeoQueries - da gi rabotim sled 14 mart(predavane na dokumentaciq)
-//Do togava ne pipam!!!!!!
-
-    private fun checkLocationPermissions(){
-        val task = fusedLocationProviderClient.lastLocation
-
-
-        if(ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-            ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED){
-            ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION), 101)
-            return
-        }
-
-
-        task.addOnSuccessListener { location: Location? ->
-            if (location != null) {
-                println("LOCATIONN :" + location.latitude)
-                positionSave.latitude = location.latitude
-                positionSave.longitude = location.longitude
-                positionSave = location
-                mMap?.addMarker(MarkerOptions().position(LatLng(location.latitude, location.longitude)).title("MyPosition"))
-
-                val radius = 3500.0
-
-
-                mMap?.addCircle(
-                    CircleOptions()
-                        .center(LatLng(location.latitude, location.longitude))
-                        .radius(radius)
-                        .strokeWidth(3f)
-                        .fillColor(Color.argb(70, 240, 37, 14))
-                )
-
-            }
-
-        }
-    }
 
 }

@@ -1,3 +1,11 @@
 package org.elsys.diploma
 
-data class MarkerData(val latitude : Double, val longitude : Double, val isCleaned : Boolean, val documentId : String)
+
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
+
+@Parcelize
+data class MarkerData(
+    val latitude: Double, val longitude: Double, val isCleaned: Boolean, val documentId: String,
+    val creator: String
+) : Parcelable

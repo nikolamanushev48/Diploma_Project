@@ -11,11 +11,13 @@ import android.widget.Button
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import android.widget.ImageView
+import android.widget.Toast
 import com.example.google_maps_try.R
+import com.google.firebase.auth.FirebaseAuth
 
 
 class MarkerActivity : AppCompatActivity() {
-    private lateinit var documentId: String
+    private lateinit var document: MarkerData
 
     private var tempButtonResult: Int = 0
 
@@ -33,8 +35,8 @@ class MarkerActivity : AppCompatActivity() {
 
                 (application as MyApplication).apiService.imageSave(
                     imageBitmap,
-                    documentId,
-                    tempButtonResult == 2
+                    document.documentId,
+                    tempButtonResult == 2//checking if this condition is true!!!
 
                 ){
                     imageViewRef.setImageURI(it)
@@ -43,7 +45,7 @@ class MarkerActivity : AppCompatActivity() {
                 if (tempButtonResult == 2) {
                     val trashDoneIntent = Intent(this, MainActivity::class.java).putExtra(
                         "doneMarkerDocId",
-                        documentId
+                        document.documentId
                     )
                     setResult(Activity.RESULT_OK, trashDoneIntent)
                     finish()
@@ -94,20 +96,21 @@ class MarkerActivity : AppCompatActivity() {
 
 
         val intent: Intent = intent
-        documentId = intent.getStringExtra("tempMarkerIntent")!!
+        document = intent.getParcelableExtra<MarkerData>("tempMarkerIntent")!!
 
 
-        val buttonMarker: Button = findViewById(R.id.buttonMarker)
+        val buttonAddPhoto: Button = findViewById(R.id.buttonAddPhoto)
 
-        buttonMarker.setOnClickListener {
-            cameraPermission()
+       val user = FirebaseAuth.getInstance().currentUser
+
+        buttonAddPhoto.setOnClickListener {
+            if(user!!.email == document.creator){
+                cameraPermission()
+            }else{
+                Toast.makeText(this, "You are not allowed to add the current photo!", Toast.LENGTH_SHORT).show()
+            }
         }
 
-        val buttonBackToMap: Button = findViewById(R.id.buttonBackToMap)
-
-        buttonBackToMap.setOnClickListener {
-            finish()
-        }
 
         val buttonTrashDone: Button = findViewById(R.id.trashDone)
 
@@ -120,7 +123,7 @@ class MarkerActivity : AppCompatActivity() {
         imageViewRef = findViewById(R.id.imageView)
 
 
-        (application as MyApplication).apiService.displayImage(documentId){
+        (application as MyApplication).apiService.displayImage(document.documentId){
             imageViewRef.setImageURI(it)
         }
 

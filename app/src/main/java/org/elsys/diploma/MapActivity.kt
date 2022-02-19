@@ -23,11 +23,6 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
 
         val mapFragment = supportFragmentManager.findFragmentById(R.id.map_secondary_page) as SupportMapFragment
         mapFragment.getMapAsync(this)
-
-        val button: Button = findViewById(R.id.maps_close_button)
-        button.setOnClickListener() {
-            finish()
-        }
     }
 
     override fun onMapReady(googleMap: GoogleMap) {

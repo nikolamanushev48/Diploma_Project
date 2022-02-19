@@ -19,16 +19,5 @@
         app:layout_constraintTop_toTopOf="parent"
         tools:context="org.elsys.diploma.MainActivity" />
 
-    <androidx.appcompat.widget.AppCompatButton
-        android:id="@+id/maps_close_button"
-        android:layout_width="192dp"
-        android:layout_height="71dp"
-        android:layout_marginStart="4dp"
-        android:layout_marginBottom="4dp"
-        android:background="@drawable/main_add_location_button"
-        android:text="@string/close_maps"
-        android:textColor="@android:color/white"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

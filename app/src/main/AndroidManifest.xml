@@ -17,13 +17,13 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Google_Maps_Try"
+        android:theme="@style/Theme.DiplomaProject"
         android:name = "org.elsys.diploma.MyApplication">
         <activity
             android:name="org.elsys.diploma.MarkerActivity"
             android:exported="false"
             android:label="@string/title_activity_marker"
-            android:theme="@style/Theme.Google_Maps_Try.NoActionBar" />
+            android:theme="@style/Theme.DiplomaProject.NoActionBar" />
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"
@@ -33,18 +33,18 @@
             android:name="org.elsys.diploma.LoginActivity"
             android:label="@string/title_activity_login"
             android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
 
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
         </activity>
 
         <activity
             android:name="org.elsys.diploma.MainActivity"
             android:exported="true"
             android:label="@string/MainPage">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
 
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
         </activity>
 
         <activity
