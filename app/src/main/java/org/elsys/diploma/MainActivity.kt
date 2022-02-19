@@ -8,7 +8,6 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import com.example.google_maps_try.R
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.GoogleMap
@@ -18,7 +17,6 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.GeoPoint
 
 
@@ -123,10 +121,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                             )
                     )
                 } else {
-                    val firebase = FirebaseAuth.getInstance()
-                    val user = firebase.currentUser
-
-                    if (document.creator == user!!.email) {
+                    val currentUser =
+                        (application as MyApplication).apiService.currentUser()!!.email
+                    if (document.creator == currentUser) {
                         mMap?.addMarker(
                             MarkerOptions()
                                 .position(LatLng(document.latitude, document.longitude))

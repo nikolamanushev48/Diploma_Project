@@ -27,7 +27,7 @@ class ApiServiceImpl : AppCompatActivity(), ApiService {
         getLocations()
     }
 
-    private val lifeData: MutableLiveData<List<MarkerData>> = MutableLiveData(listOf())
+    private val liveData: MutableLiveData<List<MarkerData>> = MutableLiveData(listOf())
 
     private val storageRef = FirebaseStorage.getInstance().reference
 
@@ -36,7 +36,7 @@ class ApiServiceImpl : AppCompatActivity(), ApiService {
     private val firebaseAuth = FirebaseAuth.getInstance()
 
     override fun locationLoadData(): LiveData<List<MarkerData>> {
-        return lifeData
+        return liveData
     }
 
     private fun getLocations() {
@@ -65,7 +65,7 @@ class ApiServiceImpl : AppCompatActivity(), ApiService {
                     }
                 }
             }
-            lifeData.postValue(list)
+            liveData.postValue(list)
         }
     }
 

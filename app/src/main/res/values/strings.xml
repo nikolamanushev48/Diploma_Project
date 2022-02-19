@@ -25,4 +25,5 @@
     <string name="Login" />
     <string name="title_activity_marker">MarkerActivity</string>
     <string name="log_out">Log Out</string>
+    <string name="select_my_locations">Select My Locations</string>
 </resources>

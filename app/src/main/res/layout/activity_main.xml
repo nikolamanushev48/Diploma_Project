@@ -58,8 +58,8 @@
 
     <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/logout"
-        android:layout_width="143dp"
-        android:layout_height="65dp"
+        android:layout_width="133dp"
+        android:layout_height="51dp"
         android:background="@drawable/main_add_location_button"
         android:text="@string/log_out"
         android:textColor="@android:color/white"
