@@ -4,7 +4,6 @@ import android.content.ContentValues
 import android.graphics.Bitmap
 import android.net.Uri
 import android.util.Log
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.net.toUri
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -21,13 +20,11 @@ import java.io.File
 import java.util.*
 
 
-class ApiServiceImpl : AppCompatActivity(), ApiService {
+class ApiServiceImpl : ApiService {
 
     init {
         getLocations()
     }
-
-    private val liveData: MutableLiveData<List<MarkerData>> = MutableLiveData(listOf())
 
     private val storageRef = FirebaseStorage.getInstance().reference
 
@@ -35,22 +32,25 @@ class ApiServiceImpl : AppCompatActivity(), ApiService {
 
     private val firebaseAuth = FirebaseAuth.getInstance()
 
+    private val liveData: MutableLiveData<List<MarkerData>> = MutableLiveData(listOf())
+
+
     override fun locationLoadData(): LiveData<List<MarkerData>> {
         return liveData
     }
 
     private fun getLocations() {
 
-        database.collection("locations").addSnapshotListener { value, e ->
+        database.collection("locations").addSnapshotListener { value, _ ->
             val list: MutableList<MarkerData> = mutableListOf()
 
-            if (e == null) {
+            value?.let {
+                for (document in it) {
 
-                for (document in value!!) {
                     val geoPoint = document.getGeoPoint("coordinates")
                     val isClean = document.getBoolean("isClean") ?: false
                     val creator = document.getString("creator") ?: "no value"
-
+                    val cleanedBy = document.getString("trashCleanedBy") ?: "no value"
 
                     if (geoPoint != null) {
                         val pinData =
@@ -59,7 +59,8 @@ class ApiServiceImpl : AppCompatActivity(), ApiService {
                                 geoPoint.longitude,
                                 isClean,
                                 document.id,
-                                creator
+                                creator,
+                                cleanedBy
                             )
                         list.add(pinData)
                     }
@@ -155,8 +156,6 @@ class ApiServiceImpl : AppCompatActivity(), ApiService {
     override fun deleteLocation(marker: Marker, onComplete: (bool: Boolean) -> Unit) {
         var succeeded: Boolean
 
-
-
         database
             .collection("locations")
             .whereEqualTo(
@@ -173,21 +172,15 @@ class ApiServiceImpl : AppCompatActivity(), ApiService {
 
                     database.collection("locations").document(docID).delete()
                         .addOnCompleteListener { task ->
-                            if (task.isSuccessful) {
-                                println("LOCATION DELETED" + task.result)
-
-                            } else {
-                                println("NOT SUCCEEDED")
+                            if (!task.isSuccessful) {
                                 succeeded = false
                                 onComplete(succeeded)
                             }
                         }
                 } else {
-                    Log.i("test", "Error toast!")
                     succeeded = false
                     onComplete(succeeded)
                 }
-
 
             }
     }
@@ -199,7 +192,7 @@ class ApiServiceImpl : AppCompatActivity(), ApiService {
 
     override fun login(email: String, password: String, onComplete: (bool: Boolean) -> Unit) {
         firebaseAuth.signInWithEmailAndPassword(email, password)
-            .addOnCompleteListener(this) { task ->
+            .addOnCompleteListener { task ->
 
                 onComplete(task.isSuccessful)
             }

@@ -46,4 +46,21 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.023" />
 
+
+    <TextView
+        android:id="@+id/textViewCleanedBy"
+        android:layout_width="215dp"
+        android:layout_height="38dp"
+        android:background="#15CF1D"
+        android:fontFamily="sans-serif-light"
+
+        android:textAlignment="center"
+        android:textSize="16sp"
+        android:textStyle="bold|italic"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.848" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

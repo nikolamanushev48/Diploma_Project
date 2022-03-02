@@ -1,12 +1,10 @@
 package org.elsys.diploma
 
-import android.graphics.Color
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.CircleOptions
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 
@@ -15,6 +13,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private lateinit var mMap: GoogleMap
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
@@ -22,16 +21,11 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         val mapFragment =
             supportFragmentManager.findFragmentById(R.id.map_secondary_page) as SupportMapFragment
         mapFragment.getMapAsync(this)
+
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
-
-        val position = LatLng(41.4314, 25.0519)
-        mMap.addCircle(
-            CircleOptions().center(position).radius(3500.0).strokeWidth(3f)
-                .fillColor(Color.argb(70, 240, 37, 14))
-        )
 
         mMap.setOnMapClickListener { point ->
 
@@ -40,7 +34,6 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
             val marker = MarkerOptions().position(LatLng(point.latitude, point.longitude))
 
             mMap.addMarker(marker)
-
 
             finish()
 

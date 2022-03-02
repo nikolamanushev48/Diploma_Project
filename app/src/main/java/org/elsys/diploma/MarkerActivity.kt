@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.provider.MediaStore
 import android.widget.Button
 import android.widget.ImageView
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -42,10 +43,7 @@ class MarkerActivity : AppCompatActivity() {
                 }
 
                 if (tempButtonResult == 2) {
-                    val trashDoneIntent = Intent(this, MainActivity::class.java).putExtra(
-                        "doneMarkerDocId",
-                        document.documentId
-                    )
+                    val trashDoneIntent = Intent(this, MainActivity::class.java)
                     setResult(Activity.RESULT_OK, trashDoneIntent)
                     finish()
                 }
@@ -95,7 +93,7 @@ class MarkerActivity : AppCompatActivity() {
 
 
         val intent: Intent = intent
-        document = intent.getParcelableExtra<MarkerData>("tempMarkerIntent")!!
+        document = intent.getParcelableExtra("tempMarkerIntent")!!
 
 
         val buttonAddPhoto: Button = findViewById(R.id.buttonAddPhoto)
@@ -122,6 +120,14 @@ class MarkerActivity : AppCompatActivity() {
             cameraPermission()
         }
 
+
+        val textView: TextView = findViewById(R.id.textViewCleanedBy)
+        if (document.isCleaned) {
+
+            ("This place was cleaned by : " + document.cleanedBy).also {
+                textView.text = it
+            }
+        }
 
         imageViewRef = findViewById(R.id.imageView)
 
