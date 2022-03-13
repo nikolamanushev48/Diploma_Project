@@ -6,10 +6,13 @@
         <entry key="..\:/Users/nikol/AndroidStudioProjects/Google_Maps_Try/app/src/main/res/drawable-v24/ic_launcher_foreground.xml" value="0.195" />
         <entry key="..\:/Users/nikol/AndroidStudioProjects/Google_Maps_Try/app/src/main/res/drawable/ic_launcher_background.xml" value="0.195" />
         <entry key="..\:/Users/nikol/AndroidStudioProjects/Google_Maps_Try/app/src/main/res/layout/activity_loginorig.xml" value="0.1621376811594203" />
-        <entry key="..\:/Users/nikol/AndroidStudioProjects/Google_Maps_Try/app/src/main/res/layout/activity_main.xml" value="0.16032608695652173" />
+        <entry key="..\:/Users/nikol/AndroidStudioProjects/Google_Maps_Try/app/src/main/res/layout/activity_main.xml" value="0.4" />
         <entry key="..\:/Users/nikol/AndroidStudioProjects/Google_Maps_Try/app/src/main/res/layout/activity_maps.xml" value="0.1272644927536232" />
         <entry key="..\:/Users/nikol/AndroidStudioProjects/Google_Maps_Try/app/src/main/res/layout/activity_marker.xml" value="0.23854166666666668" />
+        <entry key="..\:/Users/nikol/AndroidStudioProjects/Google_Maps_Try/app/src/main/res/layout/activity_register.xml" value="0.176" />
         <entry key="..\:/Users/nikol/AndroidStudioProjects/Google_Maps_Try/app/src/main/res/layout/activity_registerorig.xml" value="0.23854166666666668" />
+        <entry key="..\:/Users/nikol/AndroidStudioProjects/Google_Maps_Try/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml" value="0.1" />
+        <entry key="..\:/Users/nikol/AndroidStudioProjects/Google_Maps_Try/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml" value="0.1535" />
       </map>
     </option>
   </component>

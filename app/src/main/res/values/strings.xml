@@ -10,7 +10,7 @@
     <string name="text_view_id_map">Map</string>
     <string name="close_maps">Close</string>
     <string name="add_location">Add Location</string>
-    <string name="title_activity_login">Login</string>
+    <string name="title_activity">Smart Recycler</string>
     <string name="Registration">Registration</string>
     <string name="delete_location">Delete Location</string>
     <string name="MarkerActivity">Marker Activity</string>
@@ -23,7 +23,7 @@
     <string name="hello_first_fragment">Hello first fragment</string>
     <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
     <string name="MainPage" />
-    <string name="Login" />
+    <string name="Login" >Login</string>
     <string name="title_activity_marker">MarkerActivity</string>
     <string name="log_out">Log Out</string>
     <string name="select_my_locations">Select My Locations</string>

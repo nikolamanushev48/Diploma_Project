@@ -31,7 +31,7 @@
 
         <activity
             android:name="org.elsys.diploma.LoginActivity"
-            android:label="@string/title_activity_login"
+            android:label="@string/title_activity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

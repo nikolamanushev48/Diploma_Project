@@ -7,6 +7,8 @@ import android.util.Log
 import androidx.core.net.toUri
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.firebase.geofire.GeoFireUtils
+import com.firebase.geofire.GeoLocation
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.firebase.auth.FirebaseAuth
@@ -14,6 +16,7 @@ import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.GeoPoint
+import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.storage.FirebaseStorage
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -21,10 +24,6 @@ import java.util.*
 
 
 class ApiServiceImpl : ApiService {
-
-    init {
-        getLocations()
-    }
 
     private val storageRef = FirebaseStorage.getInstance().reference
 
@@ -34,48 +33,87 @@ class ApiServiceImpl : ApiService {
 
     private val liveData: MutableLiveData<List<MarkerData>> = MutableLiveData(listOf())
 
+    private var tempSnapshot: ListenerRegistration? = null
 
     override fun locationLoadData(): LiveData<List<MarkerData>> {
         return liveData
     }
 
-    private fun getLocations() {
+    override fun queryLocations(northeast: LatLng, southwest: LatLng) {
 
-        database.collection("locations").addSnapshotListener { value, _ ->
-            val list: MutableList<MarkerData> = mutableListOf()
+        var geoHash = ""
 
-            value?.let {
-                for (document in it) {
+        for (precision in 22 downTo 1 step 1) {
+            val geoHashNorthEast = GeoFireUtils.getGeoHashForLocation(
+                GeoLocation(
+                    northeast.latitude,
+                    northeast.longitude
+                ), precision
+            )
+            val geoHashSouthWest = GeoFireUtils.getGeoHashForLocation(
+                GeoLocation(
+                    southwest.latitude,
+                    southwest.longitude
+                ), precision
+            )
 
-                    val geoPoint = document.getGeoPoint("coordinates")
-                    val isClean = document.getBoolean("isClean") ?: false
-                    val creator = document.getString("creator") ?: "no value"
-                    val cleanedBy = document.getString("trashCleanedBy") ?: "no value"
+            if (geoHashNorthEast == geoHashSouthWest) {
+                geoHash = geoHashNorthEast
 
-                    if (geoPoint != null) {
-                        val pinData =
-                            MarkerData(
-                                geoPoint.latitude,
-                                geoPoint.longitude,
-                                isClean,
-                                document.id,
-                                creator,
-                                cleanedBy
-                            )
-                        list.add(pinData)
-                    }
-                }
+                break
             }
-            liveData.postValue(list)
         }
+
+
+        tempSnapshot?.remove()//only the last one called snapshotListener should be active
+
+
+        tempSnapshot =
+            database.collection("locations").whereGreaterThanOrEqualTo("geoHash", geoHash + "0")
+                .whereLessThanOrEqualTo("geoHash", geoHash + "~").addSnapshotListener { value, _ ->
+                    // ~ is one of the biggest from all the symbols in the ascii table
+                    val list: MutableList<MarkerData> = mutableListOf()
+
+
+                    value?.let {
+                        for (document in it) {
+
+                            val geoPoint = document.getGeoPoint("coordinates")
+                            val isClean = document.getBoolean("isClean") ?: false
+                            val creator = document.getString("creator") ?: "no value"
+                            val cleanedBy = document.getString("trashCleanedBy") ?: "no value"
+
+                            if (geoPoint != null) {
+                                val pinData =
+                                    MarkerData(
+                                        geoPoint.latitude,
+                                        geoPoint.longitude,
+                                        isClean,
+                                        document.id,
+                                        creator,
+                                        cleanedBy
+                                    )
+                                list.add(pinData)
+                            }
+                        }
+                    }
+                    liveData.postValue(list)
+                }
     }
+
 
     override fun addLocationData(position: LatLng) {
 
         val docData = hashMapOf(
             "coordinates" to GeoPoint(position.latitude, position.longitude),
             "isClean" to false,
-            "creator" to firebaseAuth.currentUser!!.email!!
+            "creator" to firebaseAuth.currentUser!!.email!!,
+            "geoHash" to GeoFireUtils.getGeoHashForLocation(
+                GeoLocation(
+                    position.latitude,
+                    position.longitude
+                )
+            )
         )
 
 

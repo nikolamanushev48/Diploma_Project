@@ -1,14 +1,20 @@
 package org.elsys.diploma
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.widget.Button
-import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.SwitchCompat
+import androidx.core.content.ContextCompat
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
@@ -29,17 +35,18 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private val markerSave: MutableMap<GeoPoint, MarkerData> = HashMap()
 
+    private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
+
+    private var userLocation: LatLng = LatLng(0.0, 0.0)
+
     private val getResult =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {}
 
-    @SuppressLint("UseSwitchCompatOrMaterialCode")
-    private lateinit var switchMyLocations: Switch
+    private lateinit var switchMyLocations: SwitchCompat
 
-    @SuppressLint("UseSwitchCompatOrMaterialCode")
-    private lateinit var switchLocationsForCleaning: Switch
+    private lateinit var switchLocationsForCleaning: SwitchCompat
 
-    @SuppressLint("UseSwitchCompatOrMaterialCode")
-    private lateinit var switchCleanedLocations: Switch
+    private lateinit var switchCleanedLocations: SwitchCompat
 
     private val onMarkerClickListener = { it: Marker ->
         val positionMarker = GeoPoint(it.position.latitude, it.position.longitude)
@@ -48,7 +55,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             Intent(this, MarkerActivity::class.java)
                 .putExtra("tempMarkerIntent", markerSave.get(positionMarker))
 
-        overridePendingTransition(0, 0)
 
         getResult.launch(intentMarkerActivity)
         true
@@ -59,7 +65,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        (application as MyApplication).apiService.locationLoadData().observe(this) { updateMap(it) }
+        (application as MyApplication).apiService.locationLoadData()
+            .observe(this) { updateMap(it) }//updating map when there are changes in the data
 
         val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
@@ -72,9 +79,13 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
         pinCount = findViewById(R.id.numberPins)
 
+        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
+
+
         val addButton: Button = findViewById(R.id.location_button)
         addButton.setOnClickListener {
-            val intent = Intent(this, MapActivity::class.java)
+            val intent =
+                Intent(this, MapActivity::class.java).putExtra("userLocation", userLocation)
             startActivity(intent)
         }
 
@@ -119,43 +130,34 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         mMap?.let {
             mMap?.clear()
             for (document in data) {
+                val marker = MarkerOptions().position(LatLng(document.latitude, document.longitude))
 
                 if (document.isCleaned) {
-
-                    mMap?.addMarker(
-                        MarkerOptions()
-                            .position(LatLng(document.latitude, document.longitude))
-                            .icon(
-                                BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)
-                            )
+                    marker.icon(
+                        BitmapDescriptorFactory.defaultMarker(
+                            BitmapDescriptorFactory.HUE_GREEN
+                        )
                     )
                 } else {
                     val currentUser =
                         (application as MyApplication).apiService.currentUser()!!.email
                     if (document.creator == currentUser) {
-                        mMap?.addMarker(
-                            MarkerOptions()
-                                .position(LatLng(document.latitude, document.longitude))
-                                .icon(
-                                    BitmapDescriptorFactory.defaultMarker(
-                                        BitmapDescriptorFactory.HUE_YELLOW
-                                    )
-                                )
+                        marker.icon(
+                            BitmapDescriptorFactory.defaultMarker(
+                                BitmapDescriptorFactory.HUE_YELLOW
+                            )
                         )
                     } else {
-                        val marker =
-                            MarkerOptions().position(
-                                LatLng(
-                                    document.latitude,
-                                    document.longitude
-                                )
+                        marker.icon(
+                            BitmapDescriptorFactory.defaultMarker(
+                                BitmapDescriptorFactory.HUE_RED
                             )
-                        mMap?.addMarker(marker)
+                        )
 
                     }
 
                 }
-
+                mMap?.addMarker(marker)
             }
         }
 
@@ -180,7 +182,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private fun myLocations(data: List<MarkerData>) {
         switchMyLocations.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) {
+            if (!isChecked) {
+                locationVisualization(data)
+            } else {
                 switchLocationsForCleaning.isChecked = false
                 switchCleanedLocations.isChecked = false
                 mMap?.let {
@@ -188,33 +192,29 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                     for (document in data) {
                         val currentUser =
                             (application as MyApplication).apiService.currentUser()!!.email
+                        val marker =
+                            MarkerOptions().position(LatLng(document.latitude, document.longitude))
+
                         if (document.creator == currentUser) {
                             if (document.isCleaned) {
-                                mMap?.addMarker(
-                                    MarkerOptions()
-                                        .position(LatLng(document.latitude, document.longitude))
-                                        .icon(
-                                            BitmapDescriptorFactory.defaultMarker(
-                                                BitmapDescriptorFactory.HUE_GREEN
-                                            )
-                                        )
+                                marker.icon(
+                                    BitmapDescriptorFactory.defaultMarker(
+                                        BitmapDescriptorFactory.HUE_GREEN
+                                    )
                                 )
+                                mMap?.addMarker(marker)
                             } else {
-                                mMap?.addMarker(
-                                    MarkerOptions()
-                                        .position(LatLng(document.latitude, document.longitude))
-                                        .icon(
-                                            BitmapDescriptorFactory.defaultMarker(
-                                                BitmapDescriptorFactory.HUE_YELLOW
-                                            )
-                                        )
+                                marker.icon(
+                                    BitmapDescriptorFactory.defaultMarker(
+                                        BitmapDescriptorFactory.HUE_YELLOW
+                                    )
                                 )
+                                mMap?.addMarker(marker)
                             }
                         }
+
                     }
                 }
-            } else {
-                locationVisualization(data)
             }
         }
     }
@@ -222,7 +222,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private fun locationsForCleaning(data: List<MarkerData>) {
         switchLocationsForCleaning.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) {
+            if (!isChecked) {
+                locationVisualization(data)
+            } else {
                 switchMyLocations.isChecked = false
                 switchCleanedLocations.isChecked = false
                 mMap?.let {
@@ -230,51 +232,51 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                     for (document in data) {
                         val currentUser =
                             (application as MyApplication).apiService.currentUser()!!.email
+                        val marker =
+                            MarkerOptions().position(LatLng(document.latitude, document.longitude))
+
                         if (document.creator != currentUser) {
                             if (!document.isCleaned) {
-                                mMap?.addMarker(
-                                    MarkerOptions()
-                                        .position(LatLng(document.latitude, document.longitude))
-                                        .icon(
-                                            BitmapDescriptorFactory.defaultMarker(
-                                                BitmapDescriptorFactory.HUE_RED
-                                            )
-                                        )
+                                marker.icon(
+                                    BitmapDescriptorFactory.defaultMarker(
+                                        BitmapDescriptorFactory.HUE_RED
+                                    )
                                 )
+                                mMap?.addMarker(marker)
                             }
                         }
+
                     }
                 }
-            } else {
-                locationVisualization(data)
             }
+
         }
     }
 
 
     private fun cleanedLocations(data: List<MarkerData>) {
         switchCleanedLocations.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) {
+            if (!isChecked) {
+                locationVisualization(data)
+            } else {
+
                 switchMyLocations.isChecked = false
                 switchLocationsForCleaning.isChecked = false
                 mMap?.let {
                     mMap?.clear()
                     for (document in data) {
+                        val marker =
+                            MarkerOptions().position(LatLng(document.latitude, document.longitude))
                         if (document.isCleaned) {
-                            mMap?.addMarker(
-                                MarkerOptions()
-                                    .position(LatLng(document.latitude, document.longitude))
-                                    .icon(
-                                        BitmapDescriptorFactory.defaultMarker(
-                                            BitmapDescriptorFactory.HUE_GREEN
-                                        )
-                                    )
+                            marker.icon(
+                                BitmapDescriptorFactory.defaultMarker(
+                                    BitmapDescriptorFactory.HUE_GREEN
+                                )
                             )
+                            mMap?.addMarker(marker)
                         }
                     }
                 }
-            } else {
-                locationVisualization(data)
             }
         }
     }
@@ -282,15 +284,69 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
 
-        val data = (application as MyApplication).apiService.locationLoadData().value
+        checkLocationPermissions()
+
+        val data =
+            (application as MyApplication).apiService.locationLoadData().value//the value of livedata
 
         if (data != null) {
             updateMap(data)
         }
 
-        mMap?.setOnMarkerClickListener(onMarkerClickListener)
+        mMap?.setOnMarkerClickListener(onMarkerClickListener)//setting onMarkerClickListener because of the delete button
+
+        mMap?.setOnCameraIdleListener {
+            val northeast = mMap?.projection?.visibleRegion?.latLngBounds?.northeast
+            val southwest = mMap?.projection?.visibleRegion?.latLngBounds?.southwest
+
+            (application as MyApplication).apiService.queryLocations(northeast!!, southwest!!)
+        }
 
     }
 
+    @SuppressLint("MissingPermission")
+    private val requestPermissionLauncher =
+        registerForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) { isGranted: Boolean ->
+            if (isGranted) {
+                mMap?.isMyLocationEnabled = true
+                updateUserLocation()
+            }
+        }
 
+    private fun checkLocationPermissions() {
+
+        if (ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            mMap?.isMyLocationEnabled = true
+            updateUserLocation()
+        } else if (!shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)) {
+            requestPermissionLauncher.launch(
+                Manifest.permission.ACCESS_FINE_LOCATION
+            )
+        }
+    }
+
+
+    @SuppressLint("MissingPermission")
+    private fun updateUserLocation() {
+
+        val task = fusedLocationProviderClient.lastLocation
+
+        task.addOnCompleteListener {
+            val location = it.result
+            if (location != null) {
+                with(mMap) {
+                    userLocation = LatLng(location.latitude, location.longitude)
+                    this!!.moveCamera(CameraUpdateFactory.newLatLngZoom(userLocation, 13f))
+                }
+
+            }
+
+        }
+    }
 }

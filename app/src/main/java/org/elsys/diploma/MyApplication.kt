@@ -21,6 +21,8 @@ class MyApplication : Application() {
 
 interface ApiService {
     fun locationLoadData(): LiveData<List<MarkerData>>
+    fun queryLocations(northeast: LatLng, southwest: LatLng)
+
     fun imageSave(
         image: Bitmap,
         documentId: String,

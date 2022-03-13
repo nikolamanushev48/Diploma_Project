@@ -21,9 +21,11 @@ class MarkerActivity : AppCompatActivity() {
 
     private var tempButtonResult: Int = 0
 
-
     lateinit var imageViewRef: ImageView
 
+    companion object {
+        const val trashButtonCheck: Int = 2
+    }
 
     private var resultLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -36,13 +38,13 @@ class MarkerActivity : AppCompatActivity() {
                 (application as MyApplication).apiService.imageSave(
                     imageBitmap,
                     document.documentId,
-                    tempButtonResult == 2//checking if this condition is true!!!
+                    tempButtonResult == trashButtonCheck//checking if this condition is true!!!
 
                 ) {
                     imageViewRef.setImageURI(it)
                 }
 
-                if (tempButtonResult == 2) {
+                if (tempButtonResult == trashButtonCheck) {
                     val trashDoneIntent = Intent(this, MainActivity::class.java)
                     setResult(Activity.RESULT_OK, trashDoneIntent)
                     finish()
@@ -64,26 +66,21 @@ class MarkerActivity : AppCompatActivity() {
         }
 
     private fun cameraPermission() {
-        when {
-            ContextCompat.checkSelfPermission(
+
+        if (ContextCompat.checkSelfPermission(
                 this,
                 android.Manifest.permission.CAMERA
-            ) == PackageManager.PERMISSION_GRANTED -> {
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+            resultLauncher.launch(takePictureIntent)
 
-                val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-                resultLauncher.launch(takePictureIntent)
-
-            }
-            shouldShowRequestPermissionRationale(android.Manifest.permission.CAMERA) -> {
-
-            }
-            else -> {
-                requestPermissionLauncher.launch(
-                    android.Manifest.permission.CAMERA
-                )
-
-            }
+        } else if (!shouldShowRequestPermissionRationale(android.Manifest.permission.CAMERA)) {
+            requestPermissionLauncher.launch(
+                android.Manifest.permission.CAMERA
+            )
         }
+
     }
 
 
@@ -116,7 +113,7 @@ class MarkerActivity : AppCompatActivity() {
         val buttonTrashDone: Button = findViewById(R.id.trashDone)
 
         buttonTrashDone.setOnClickListener {
-            tempButtonResult = 2
+            tempButtonResult = trashButtonCheck
             cameraPermission()
         }
 
@@ -137,4 +134,6 @@ class MarkerActivity : AppCompatActivity() {
         }
 
     }
+
+
 }
