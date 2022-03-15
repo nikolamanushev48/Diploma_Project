@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.google_maps_try">
-    <!--
-         The ACCESS_COARSE/FINE_LOCATION permissions are not required to use
-         Google Maps Android API v2, but you must specify either coarse or fine
-         location permissions for the "MyLocation" functionality.
-    -->
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    package="org.elsys.diploma">
+
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-feature android:name="android.hardware.location.network" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-feature android:name="android.hardware.location.gps" />
+
 
     <application
         android:allowBackup="true"
@@ -15,22 +17,22 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Google_Maps_Try">
+        android:theme="@style/Theme.DiplomaProject"
+        android:name = "org.elsys.diploma.MyApplication">
+        <activity
+            android:name="org.elsys.diploma.MarkerActivity"
+            android:exported="false"
+            android:label="@string/title_activity_marker"
+            android:theme="@style/Theme.DiplomaProject.NoActionBar" />
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="@string/google_maps_key" />
 
         <activity
-            android:name=".LoginActivity"
-            android:label="@string/title_activity_login">
-
-        </activity>
-
-
-        <activity
-            android:name=".MainActivity"
-            android:label="@string/MainPage">
+            android:name="org.elsys.diploma.LoginActivity"
+            android:label="@string/title_activity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -39,14 +41,23 @@
         </activity>
 
         <activity
-            android:name=".MapActivity"
-            android:label="@string/title_activity_maps">
+            android:name="org.elsys.diploma.MainActivity"
+            android:exported="true"
+            android:label="@string/MainPage">
+
         </activity>
 
         <activity
-            android:name=".RegisterActivity"
-            android:label="@string/Registration">
+            android:name="org.elsys.diploma.MapActivity"
+            android:label="@string/title_activity_maps">
+
         </activity>
+        <activity
+            android:name="org.elsys.diploma.RegisterActivity"
+            android:label="@string/Registration">
+
+        </activity>
+
 
     </application>
 
